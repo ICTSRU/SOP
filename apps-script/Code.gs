@@ -1,9 +1,10 @@
 /**
  * SRU SOP Register — Google Apps Script backend
- * Form: SRU-FRM-SOP-01 · Backend version 1.0
+ * Form: SRU-FRM-SOP-01 · Backend version 1.2
  *
  * Setup:
- *  1. Create a Google Sheet (e.g. "سجل الإجراءات التشغيلية - SRU SOP Register").
+ *  1. Sheet: "سجل الإجراءات التشغيلية - SRU SOP Register"
+ *     https://docs.google.com/spreadsheets/d/1_JJJYaSTAgGn4e3kUc58E71YJaZMqEqoV6Mp-hNzhig/edit
  *  2. Extensions → Apps Script → paste this file → Save.
  *  3. Run setup() once and approve permissions (creates tabs + weekly reminder).
  *  4. Deploy → New deployment → Web app
@@ -28,9 +29,16 @@ const SOP_HEADERS = [
 ];
 const STEP_HEADERS = ['sop_no','version','step_no','description','responsible_role','duration','output'];
 
-/* ---------- One-time setup ---------- */
-function setup() {
+/* ---------- Tabs: created automatically if missing ---------- */
+function ensureSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('Script is not bound to a Google Sheet (open it from the Sheet: Extensions → Apps Script)');
+  if (ss.getSheetByName(SOP_SHEET) && ss.getSheetByName(STEP_SHEET)) return ss;
+  // Reuse the first tab as SOPs if it is the empty/header-only default tab
+  if (!ss.getSheetByName(SOP_SHEET)) {
+    const first = ss.getSheets()[0];
+    if (first.getLastRow() <= 1) first.setName(SOP_SHEET);
+  }
   [[SOP_SHEET, SOP_HEADERS], [STEP_SHEET, STEP_HEADERS]].forEach(([name, headers]) => {
     const sh = ss.getSheetByName(name) || ss.insertSheet(name);
     sh.getRange(1, 1, 1, headers.length).setValues([headers])
@@ -38,6 +46,12 @@ function setup() {
     sh.setFrozenRows(1);
     sh.setRightToLeft(true);
   });
+  return ss;
+}
+
+/* ---------- One-time setup (tabs + weekly reminder trigger) ---------- */
+function setup() {
+  ensureSheets();
   // Weekly review-date digest — Sunday 07:00 Riyadh
   ScriptApp.getProjectTriggers()
     .filter(t => t.getHandlerFunction() === 'sendReviewReminders')
@@ -90,9 +104,8 @@ function allocate(unit) {
 /* ---------- Save (insert or update by sop_no) ---------- */
 function saveSop(d) {
   if (!d.title_ar) throw new Error('title_ar is required');
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ensureSheets();
   const sh = ss.getSheetByName(SOP_SHEET), st = ss.getSheetByName(STEP_SHEET);
-  if (!sh || !st) throw new Error('Run setup() first');
   const now = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
 
   let created = false;
@@ -137,7 +150,7 @@ function findRow(sh, id) {
 
 /* ---------- Read ---------- */
 function listSops() {
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SOP_SHEET);
+  const sh = ensureSheets().getSheetByName(SOP_SHEET);
   if (!sh || sh.getLastRow() < 2) return [];
   const v = sh.getRange(2, 1, sh.getLastRow() - 1, SOP_HEADERS.length).getDisplayValues();
   const ix = k => SOP_HEADERS.indexOf(k);
@@ -149,7 +162,7 @@ function listSops() {
 }
 
 function getSop(id) {
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SOP_SHEET);
+  const sh = ensureSheets().getSheetByName(SOP_SHEET);
   const r = findRow(sh, id);
   if (!r) return { ok: false, error: 'not found: ' + id };
   return { ok: true, data: JSON.parse(sh.getRange(r, SOP_HEADERS.indexOf('json') + 1).getValue()) };

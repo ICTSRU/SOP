@@ -81,6 +81,19 @@ input[readonly]{background:var(--purple-light)}
 .tablewrap{overflow-x:auto}
 .addrow{margin-top:8px}
 
+/* Record picker */
+.recbar{background:#fff;border:1px solid var(--border);border-inline-start:4px solid var(--blue);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.recbar label{margin:0;white-space:nowrap}
+.recbar select{flex:1;min-width:240px}
+.mode{font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.mode.new{background:var(--blue-light);color:var(--blue)}
+.mode.edit{background:#fff3dc;color:var(--warn)}
+/* Site footer (ITOC bottom-left) */
+.sitefoot{background:#fff;border-top:1px solid var(--border);margin-top:8px}
+.sitefoot .container{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px;font-size:12px;color:var(--muted)}
+.itoc-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--muted);font-weight:700}
+.itoc-link img{height:40px;width:auto}
+.itoc-link:hover{opacity:.85}
 /* Toast / modal */
 #toast{position:fixed;bottom:18px;left:18px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius);opacity:0;transition:.25s;z-index:99;max-width:90vw}
 #toast.show{opacity:1}
@@ -100,10 +113,14 @@ input[readonly]{background:var(--purple-light)}
 @media print{
   @page{size:A4;margin:14mm 14mm 16mm}
   body{background:#fff;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .no-print,.toolbar,.topbar,.diag,main,#toast,.modal{display:none!important}
-  .brand{border:0}
+  .no-print,.brand,.toolbar,.topbar,.diag,main,#toast,.modal{display:none!important}
   #printDoc{display:block}
 }
+.pd .pgwrap{width:100%;border-collapse:collapse;margin:0}
+.pd .pgwrap>thead>tr>td,.pd .pgwrap>tbody>tr>td{border:0;padding:0}
+.pd .pghead{display:flex;justify-content:space-between;align-items:center;padding-bottom:5px;margin-bottom:8px;border-bottom:1px solid #cbbfe0}
+.pd .pghead img.s{height:38px}.pd .pghead img.i{height:50px}
+.pd .pghead .ref{font-size:9.5px;color:var(--muted);text-align:center;line-height:1.5}
 .pd h1{font-size:17px;margin:4px 0 0;color:var(--purple-dark)}
 .pd .sub{color:var(--muted);direction:ltr;text-align:right;font-weight:600;margin-bottom:6px}
 .pd .band{height:4px;background:repeating-linear-gradient(135deg,var(--blue) 0 12px,var(--purple) 12px 24px);margin:6px 0 10px}
@@ -116,7 +133,7 @@ input[readonly]{background:var(--purple-light)}
 .pd .txt{white-space:pre-wrap;border:1px solid #cbbfe0;padding:5px 7px;margin-bottom:6px;min-height:22px}
 .pd .sig td{height:52px}
 .pd tr{page-break-inside:avoid}
-.pd .foot{margin-top:10px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between;border-top:1px solid #cbbfe0;padding-top:4px}
+.pd .foot{margin-top:10px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #cbbfe0;padding-top:4px}
 </style>
 </head>
 <body>
@@ -134,7 +151,7 @@ input[readonly]{background:var(--purple-light)}
     <div>
       <h1>نموذج إجراء تشغيلي قياسي <span class="en">Standard Operating Procedure (SOP) Template</span></h1>
     </div>
-    <span class="verchip">إصدار النموذج <b id="tplVer">1.2</b> · SRU-FRM-SOP-01</span>
+    <span class="verchip">إصدار النموذج <b id="tplVer">1.8</b> · SRU-FRM-SOP-01</span>
   </div>
 </div>
 <div class="diag"></div>
@@ -156,6 +173,13 @@ input[readonly]{background:var(--purple-light)}
 </div>
 
 <main class="container" id="form">
+
+  <div class="recbar no-print">
+    <label for="recSel"><i data-lucide="list"></i> السجلات المحفوظة <span class="en">Saved SOPs</span></label>
+    <select id="recSel" onchange="pickRecord(this.value)"><option value="">جارٍ تحميل السجلات...</option></select>
+    <button class="btn sm" title="تحديث القائمة" onclick="loadRecords()"><i data-lucide="refresh-cw"></i>تحديث</button>
+    <span id="modeTag" class="mode new">إجراء جديد</span>
+  </div>
 
   <!-- 1. Identification -->
   <section class="card">
@@ -267,6 +291,15 @@ input[readonly]{background:var(--purple-light)}
   </section>
 </main>
 
+<footer class="sitefoot no-print">
+  <div class="container">
+    <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات · SRU-FRM-SOP-01 · الإصدار <b class="tplVer2">1.8</b></span>
+    <a class="itoc-link" href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center">
+      <img src="https://ictsru.github.io/ITOC/assets/itoc-logo.png" alt="ITOC — IT Operations Center" onerror="this.outerHTML='<b style=&quot;color:#1b2a4a&quot;>ITOC</b>'">
+    </a>
+  </div>
+</footer>
+
 <!-- Printable document (built from form data) -->
 <div id="printDoc" class="container pd"></div>
 
@@ -283,7 +316,7 @@ input[readonly]{background:var(--purple-light)}
     <div class="body">
       <label>رابط Apps Script Web App (/exec)</label>
       <input id="setUrl" dir="ltr" placeholder="https://script.google.com/macros/s/.../exec">
-      <p class="hint">يُحفظ الرابط في هذا المتصفح. لتثبيته لجميع المستخدمين عدّل الثابت SCRIPT_URL داخل index.html.</p>
+      <p class="hint">يُحفظ الرابط في هذا المتصفح. الرابط الافتراضي مثبّت في النموذج؛ استخدم هذا الحقل فقط لتجربة رابط آخر، واتركه فارغاً للعودة إلى الرابط المثبّت.</p>
       <button class="btn primary" onclick="saveSettings()">حفظ</button>
     </div></div>
 </div>
@@ -292,8 +325,8 @@ input[readonly]{background:var(--purple-light)}
 
 <script>
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '1.2';
-const SCRIPT_URL = '';   // ← ضع رابط /exec هنا لتثبيته للجميع
+const TEMPLATE_VERSION = '1.8';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOekzfS17J1t3bHf2YIALRZ_i6eI5RDKWdfiIGvQbPfUnukKUUAstwGg5RLSRmpaof/exec';   // Web App مثبّت — SRU SOP Register
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -304,10 +337,11 @@ const TABLES = {
 };
 let data = { approvals:[], steps:[], escalations:[], revisions:[] };
 let records = [];
+let dirty = false, loaded = null;   // loaded = {sop_no, version, status} of the record opened from the register
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const url = () => localStorage.getItem('sru_sop_url') || SCRIPT_URL;
+const url = () => { try{ return localStorage.getItem('sru_sop_url') || SCRIPT_URL; }catch(e){ return SCRIPT_URL; } };
 
 function toast(msg, ms=2800){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),ms); }
 function icons(){ if(window.lucide) lucide.createIcons(); }
@@ -334,6 +368,8 @@ function delRow(n,i){ data[n].splice(i,1); if(!data[n].length) data[n].push({});
 function moveRow(n,i,d){ const j=i+d; if(j<0||j>=data[n].length) return; [data[n][i],data[n][j]]=[data[n][j],data[n][i]]; renderTable(n); saveDraft(); }
 document.addEventListener('input', e=>{
   const t=e.target;
+  if(t.id==='recSel' || t.id==='listFilter' || t.id==='setUrl') return;
+  dirty=true;
   if(t.dataset.t){ data[t.dataset.t][+t.dataset.i][t.dataset.k]=t.value; }
   saveDraft();
 });
@@ -352,7 +388,7 @@ function fill(o){
   if(!o.review_cycle) $('[data-f=review_cycle]').value='12';
   document.querySelectorAll('#channels input').forEach(x=>x.checked=(o.channels||[]).includes(x.value));
   Object.keys(TABLES).forEach(n=>{ data[n]=(o[n]&&o[n].length)? o[n].map(r=>({...r})) : [{}]; });
-  renderTables(); saveDraft();
+  renderTables(); saveDraft(); updateMode();
 }
 function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); $('#status').textContent='مسودة محفوظة محلياً'; }catch(e){} }
 
@@ -363,6 +399,7 @@ function nextVersion(v){
   let a=+m[1], b=+m[2]+1; if(b>9){a++;b=0;} return a+'.'+b;
 }
 function bumpVersion(){
+  dirty=true;
   const f=$('[data-f=version]'); const nv=nextVersion(f.value); f.value=nv;
   data.revisions=data.revisions.filter(r=>Object.values(r).some(v=>v)); data.revisions.push({version:nv,date:new Date().toISOString().slice(0,10),change:'',by:$('[data-f=prepared_by]').value});
   $('[data-f=status]').value='مسودة'; renderTable('revisions'); saveDraft(); toast('تم إنشاء الإصدار '+nv+' — أضف وصف التعديل');
@@ -384,13 +421,18 @@ async function saveToSheet(){
   const o=collect(), miss=validate(o);
   if(miss.length){ toast('حقول مطلوبة: '+miss.join('، '),5000); return; }
   if(!url()){ openSettings(); toast('أدخل رابط Apps Script أولاً'); return; }
+  if(loaded && o.sop_no===loaded.sop_no && loaded.status==='معتمد' && o.version===loaded.version &&
+     !confirm('هذا الإجراء معتمد بالإصدار '+o.version+'.\n\nموافق = حفظ التعديل على نفس الإصدار\nإلغاء = الرجوع لاستخدام زر «+0.1» لإنشاء إصدار جديد')) return;
   $('#status').textContent='جارٍ الحفظ...';
   try{
     const r=await fetch(url(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'save',data:o})});
     const j=await r.json(); if(!j.ok) throw new Error(j.error||'فشل');
     $('[data-f=sop_no]').value=j.sop_no; saveDraft();
+    dirty=false; loaded={sop_no:j.sop_no, version:o.version, status:o.status}; updateMode();
+    loadRecords(j.sop_no);
     $('#status').textContent='حُفظ في Sheets ✓ '+j.sop_no; toast((j.created?'تم إنشاء ':'تم تحديث ')+j.sop_no);
-  }catch(e){ $('#status').textContent='تعذّر الحفظ'; toast('خطأ: '+e.message,5000); }
+  }catch(e){ const m=/Failed to fetch|NetworkError|Load failed/i.test(e.message)?'تعذّر الوصول إلى Google Sheets (تحقق من الاتصال أو صلاحية Web App)':e.message;
+    $('#status').textContent='تعذّر الحفظ: '+m; $('#status').title=m; toast('تعذّر الحفظ — '+m,9000); }
 }
 async function openList(){
   if(!url()){ openSettings(); return; }
@@ -407,7 +449,35 @@ function renderList(){
 }
 async function loadRecord(id){
   try{ const j=await (await fetch(url()+'?action=get&id='+encodeURIComponent(id))).json(); if(!j.ok) throw new Error(j.error);
-    fill(j.data); $('#listModal').classList.remove('open'); toast('تم تحميل '+id); }catch(e){ toast('خطأ: '+e.message); }
+    fill(j.data); dirty=false; loaded={sop_no:j.data.sop_no, version:j.data.version, status:j.data.status}; updateMode();
+    $('#recSel').value=id; $('#listModal').classList.remove('open'); window.scrollTo(0,0);
+    toast('تم تحميل '+id+' — يمكنك المراجعة والتعديل ثم الحفظ'); }catch(e){ toast('خطأ: '+e.message); $('#recSel').value=loaded?loaded.sop_no:''; }
+}
+
+/* ================= Record picker (dropdown) ================= */
+async function loadRecords(selectId){
+  const sel=$('#recSel');
+  if(!url()){ sel.innerHTML='<option value="">لم يُضبط رابط Google Sheets</option>'; return; }
+  sel.innerHTML='<option value="">جارٍ تحميل السجلات...</option>';
+  try{
+    const j=await (await fetch(url()+'?action=list')).json(); if(!j.ok) throw new Error(j.error||'فشل');
+    records=(j.items||[]).slice().sort((a,b)=>String(a.sop_no).localeCompare(String(b.sop_no),'en',{numeric:true}));
+    sel.innerHTML=`<option value="">— اختر إجراءً محفوظاً للمراجعة والتعديل (${records.length}) —</option>`+
+      records.map(r=>`<option value="${esc(r.sop_no)}">${esc(r.sop_no)} — ${esc(r.title_ar)} — الإصدار ${esc(r.version)} — ${esc(r.status)}</option>`).join('');
+    const want=selectId || (loaded&&loaded.sop_no) || $('[data-f=sop_no]').value;
+    if(want && records.some(r=>r.sop_no===want)) sel.value=want;
+  }catch(e){ sel.innerHTML='<option value="">تعذّر تحميل السجلات — اضغط «تحديث»</option>'; }
+}
+function pickRecord(id){
+  if(!id){ return; }
+  if(dirty && !confirm('توجد تعديلات غير محفوظة في النموذج الحالي. هل تريد تجاهلها وفتح '+id+'؟')){
+    $('#recSel').value=(loaded&&loaded.sop_no)||''; return; }
+  loadRecord(id);
+}
+function updateMode(){
+  const no=$('[data-f=sop_no]').value, tag=$('#modeTag');
+  if(no){ tag.className='mode edit'; tag.textContent='تعديل سجل محفوظ: '+no+' · الإصدار '+($('[data-f=version]').value||'—'); }
+  else { tag.className='mode new'; tag.textContent='إجراء جديد (لم يُحفظ بعد)'; }
 }
 function openSettings(){ $('#setUrl').value=url(); $('#setModal').classList.add('open'); }
 function saveSettings(){ localStorage.setItem('sru_sop_url',$('#setUrl').value.trim()); $('#setModal').classList.remove('open'); toast('تم حفظ الإعدادات'); }
@@ -417,7 +487,7 @@ function exportJSON(){
   const o=collect(), b=new Blob([JSON.stringify(o,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(o.sop_no||'SOP-draft')+'_v'+(o.version||'0.0')+'.json'; a.click();
 }
-function importJSON(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ fill(JSON.parse(r.result)); toast('تم الاستيراد'); }catch(x){ toast('ملف غير صالح'); } }; r.readAsText(f); e.target.value=''; }
+function importJSON(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ fill(JSON.parse(r.result)); dirty=true; loaded=null; $('#recSel').value=''; toast('تم الاستيراد'); }catch(x){ toast('ملف غير صالح'); } }; r.readAsText(f); e.target.value=''; }
 
 /* ================= Print ================= */
 function sec(ar,en){ return `<div class="sec">${ar} <span class="en">${en}</span></div>`; }
@@ -430,7 +500,8 @@ function tbl(name,rows){
 function printDoc(){
   const o=collect(), ch=[...o.channels, o.channel_other].filter(Boolean).join('، ');
   const pre=(o.prerequisites||'').split('\n').filter(x=>x.trim());
-  $('#printDoc').innerHTML=`
+  const L=n=>{const e=document.querySelector('.brand .logo-'+n); return e?e.getAttribute('src'):'';};
+  $('#printDoc').innerHTML=`<table class="pgwrap"><thead><tr><td><div class="pghead"><img class="s" src="${L('sru')}" alt="SRU"><div class="ref">${esc(o.sop_no)||'SOP'} · الإصدار ${esc(o.version)}<br>${esc(o.title_ar)}</div><img class="i" src="${L('ictd')}" alt="ICTD"></div></td></tr></thead><tbody><tr><td>
   <h1>${esc(o.title_ar)||'إجراء تشغيلي قياسي'}</h1><div class="sub">${esc(o.title_en)}</div><div class="band"></div>
   <table class="kv"><tr><th>رقم الإجراء</th><td dir="ltr" style="text-align:right">${esc(o.sop_no)||'—'}</td><th>الإصدار</th><td>${esc(o.version)}</td></tr>
   <tr><th>الإدارة / الوحدة</th><td>${esc(o.department)}</td><th>الحالة</th><td>${esc(o.status)}</td></tr>
@@ -452,7 +523,7 @@ function printDoc(){
   <tr><th>الاسم</th><td>${esc(o.prepared_by)}</td><td>${esc(o.reviewed_by)}</td><td>${esc(o.approved_by)}</td></tr>
   <tr><th>التوقيع</th><td></td><td></td><td></td></tr><tr><th>التاريخ</th><td></td><td></td><td>${esc(o.approval_date)}</td></tr></table>
   ${sec('سجل التعديلات','Revision History')}${tbl('revisions',o.revisions)}
-  <div class="foot"><span>${esc(o.sop_no)} · الإصدار ${esc(o.version)} · ${esc(o.classification)}</span><span>نموذج SRU-FRM-SOP-01 · إصدار النموذج ${TEMPLATE_VERSION}</span></div>`;
+  <div class="foot"><span>${esc(o.sop_no)} · الإصدار ${esc(o.version)} · ${esc(o.classification)}</span><span>نموذج SRU-FRM-SOP-01 · إصدار النموذج ${TEMPLATE_VERSION}</span><a href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center"><img src="https://ictsru.github.io/ITOC/assets/itoc-logo.png" alt="ITOC" style="height:26px" onerror="this.outerHTML='<b style=&quot;color:#1b2a4a&quot;>ITOC</b>'"></a></div></td></tr></tbody></table>`;
   const old=document.title; document.title=(o.sop_no||'SOP')+'_v'+(o.version||'')+'_'+(o.title_en||o.title_ar||'').replace(/\s+/g,'-');
   window.print(); setTimeout(()=>document.title=old,500);
 }
@@ -460,7 +531,7 @@ function printDoc(){
 /* ================= New / Example ================= */
 function newSop(){ if(!confirm('بدء إجراء جديد؟ سيتم مسح النموذج الحالي.')) return;
   fill({unit_code:'ICTD',status:'مسودة',classification:'داخلي',version:'1.0',department:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',review_cycle:'12',target_unit:'ساعة عمل',priority:'متوسطة',
-        revisions:[{version:'1.0',date:new Date().toISOString().slice(0,10),change:'الإصدار الأول',by:''}]}); window.scrollTo(0,0); }
+        revisions:[{version:'1.0',date:new Date().toISOString().slice(0,10),change:'الإصدار الأول',by:''}]}); dirty=false; loaded=null; $('#recSel').value=''; window.scrollTo(0,0); }
 
 const EXAMPLE = {
   unit_code:'ICTD', sop_no:'', status:'معتمد', classification:'داخلي',
@@ -497,14 +568,14 @@ const EXAMPLE = {
   prepared_by:'Mohamed ElMahdy — مدير العمليات التقنية', reviewed_by:'مدير الأمن السيبراني', approved_by:'المدير التنفيذي للاتصالات وتقنية المعلومات (CIO)', approval_date:'2026-09-28',
   revisions:[{version:'1.0',date:'2026-09-28',change:'الإصدار الأول للإجراء',by:'Mohamed ElMahdy'}]
 };
-function loadExample(){ fill(JSON.parse(JSON.stringify(EXAMPLE))); window.scrollTo(0,0); toast('تم تحميل المثال — عدّل عليه أو اضغط «جديد»'); }
+function loadExample(){ if(dirty && !confirm('توجد تعديلات غير محفوظة. هل تريد استبدالها بالمثال؟')) return; fill(JSON.parse(JSON.stringify(EXAMPLE))); dirty=false; loaded=null; $('#recSel').value=''; window.scrollTo(0,0); toast('تم تحميل المثال — عدّل عليه أو اضغط «جديد»'); }
 
 /* ================= Init ================= */
 $('#tplVer').textContent=TEMPLATE_VERSION;
 (function init(){
   let d=null; try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)); }catch(e){}
   if(d && d.title_ar) fill(d); else fill(JSON.parse(JSON.stringify(EXAMPLE)));
-  icons();
+  icons(); loadRecords();
 })();
 </script>
 </body>
