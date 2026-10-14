@@ -1,0 +1,258 @@
+<script>
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01). Included raw via include('App'): no template processing. */
+/* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
+var LOGO_WEB = { sru: 'https://ictsru.github.io/ITOC/assets/sru-logo.png',
+                 ictd: 'https://ictsru.github.io/ITOC/assets/ictd-logo.png',
+                 itoc: 'https://ictsru.github.io/ITOC/assets/itoc-logo.png' };
+window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || LOGO_WEB[k] || ''; };
+function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
+applyLogos();
+/* ================= Configuration ================= */
+const TEMPLATE_VERSION = '2.2';
+const DRAFT_KEY = 'sru_sop_draft_v1';
+
+const TABLES = {
+  approvals:  { cols:[['level','المستوى','Level',70],['role','الجهة / الدور المعتمِد','Approver Role'],['when','متى تُطلب','When Required'],['sla','مدة الموافقة','Approval SLA',120]], min:1 },
+  steps:      { cols:[['desc','وصف الخطوة','Step Description',null,true],['role','الدور المسؤول','Responsible Role',170],['duration','المدة','Duration',100],['output','المخرج / السجل','Output / Record',170]], min:1, numbered:true, move:true },
+  escalations:{ cols:[['level','المستوى','Level',70],['trigger','شرط التصعيد','Trigger'],['to','يُصعَّد إلى','Escalate To',180],['action','الإجراء المتوقع','Expected Action']], min:1 },
+  revisions:  { cols:[['version','الإصدار','Ver.',70],['date','التاريخ','Date',130,false,'date'],['change','وصف التعديل','Change Description'],['by','بواسطة','By',150]], min:1 }
+};
+let data = { approvals:[], steps:[], escalations:[], revisions:[] };
+let records = [];
+let dirty = false, loaded = null;   // loaded = {sop_no, version, status} of the record opened from the register
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Server calls — every api* function re-checks the signed-in account (requireSruUser_) */
+const server = (fn, ...args) => new Promise((res, rej) =>
+  google.script.run.withSuccessHandler(res).withFailureHandler(e => rej(e instanceof Error ? e : new Error(String(e && e.message || e))))[fn](...args));
+
+function toast(msg, ms=2800){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),ms); }
+function icons(){ if(window.lucide) lucide.createIcons(); }
+
+/* ================= Dynamic tables ================= */
+function renderTable(name){
+  const cfg=TABLES[name], rows=data[name], el=$('#t_'+name);
+  let h='<thead><tr>'+(cfg.numbered?'<th>#</th>':'')+cfg.cols.map(c=>`<th${c[3]?` style="width:${c[3]}px"`:''}>${c[1]} <span class="en" style="color:#e6dcf5">${c[2]}</span></th>`).join('')+'<th></th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    h+='<tr>'+(cfg.numbered?`<td class="idx">${i+1}</td>`:'');
+    cfg.cols.forEach(c=>{
+      const v=esc(r[c[0]]);
+      h+= c[4] ? `<td><textarea data-t="${name}" data-i="${i}" data-k="${c[0]}">${v}</textarea></td>`
+               : `<td><input ${c[5]?`type="${c[5]}"`:''} data-t="${name}" data-i="${i}" data-k="${c[0]}" value="${v}"></td>`;
+    });
+    h+='<td class="act">'+(cfg.move?`<button class="btn icon sm" title="أعلى" onclick="moveRow('${name}',${i},-1)"><i data-lucide="arrow-up"></i></button><button class="btn icon sm" title="أسفل" onclick="moveRow('${name}',${i},1)"><i data-lucide="arrow-down"></i></button>`:'')+
+       `<button class="btn icon sm" title="حذف" onclick="delRow('${name}',${i})"><i data-lucide="trash-2"></i></button></td></tr>`;
+  });
+  el.innerHTML=h+'</tbody>'; icons();
+}
+function renderTables(){ Object.keys(TABLES).forEach(renderTable); }
+function addRow(n){ data[n].push({}); renderTable(n); saveDraft(); }
+function delRow(n,i){ data[n].splice(i,1); if(!data[n].length) data[n].push({}); renderTable(n); saveDraft(); }
+function moveRow(n,i,d){ const j=i+d; if(j<0||j>=data[n].length) return; [data[n][i],data[n][j]]=[data[n][j],data[n][i]]; renderTable(n); saveDraft(); }
+document.addEventListener('input', e=>{
+  const t=e.target;
+  if(t.id==='recSel' || t.id==='listFilter' || t.id==='setUrl') return;
+  dirty=true;
+  if(t.dataset.t){ data[t.dataset.t][+t.dataset.i][t.dataset.k]=t.value; }
+  saveDraft();
+});
+
+/* ================= Collect / fill ================= */
+function collect(){
+  const o={};
+  document.querySelectorAll('[data-f]').forEach(el=>o[el.dataset.f]=el.value.trim());
+  o.channels=[...document.querySelectorAll('#channels input:checked')].map(x=>x.value);
+  Object.keys(TABLES).forEach(n=> o[n]=data[n].filter(r=>Object.values(r).some(v=>String(v||'').trim())));
+  o.template_version=TEMPLATE_VERSION;
+  return o;
+}
+function fill(o){
+  document.querySelectorAll('[data-f]').forEach(el=>{ el.value = o[el.dataset.f] ?? (el.tagName==='SELECT'? el.options[0].value : ''); });
+  if(!o.review_cycle) $('[data-f=review_cycle]').value='12';
+  document.querySelectorAll('#channels input').forEach(x=>x.checked=(o.channels||[]).includes(x.value));
+  Object.keys(TABLES).forEach(n=>{ data[n]=(o[n]&&o[n].length)? o[n].map(r=>({...r})) : [{}]; });
+  renderTables(); saveDraft(); updateMode();
+}
+function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); $('#status').textContent='مسودة محفوظة محلياً'; }catch(e){} }
+
+/* ================= Helpers ================= */
+function nextVersion(v){
+  const m=/^(\d+)\.(\d)$/.exec(String(v||'').trim());
+  if(!m) return '1.0';
+  let a=+m[1], b=+m[2]+1; if(b>9){a++;b=0;} return a+'.'+b;
+}
+function bumpVersion(){
+  dirty=true;
+  const f=$('[data-f=version]'); const nv=nextVersion(f.value); f.value=nv;
+  data.revisions=data.revisions.filter(r=>Object.values(r).some(v=>v)); data.revisions.push({version:nv,date:new Date().toISOString().slice(0,10),change:'',by:$('[data-f=prepared_by]').value});
+  $('[data-f=status]').value='مسودة'; renderTable('revisions'); saveDraft(); toast('تم إنشاء الإصدار '+nv+' — أضف وصف التعديل');
+}
+function calcReview(){
+  const a=$('[data-f=approval_date]').value; if(!a) return;
+  const d=new Date(a); d.setMonth(d.getMonth()+ +$('[data-f=review_cycle]').value);
+  $('[data-f=review_date]').value=d.toISOString().slice(0,10); saveDraft();
+}
+function validate(o){
+  const miss=[...document.querySelectorAll('[data-f][required]')].filter(el=>!el.value.trim()).map(el=>el.closest('.grid > div').querySelector('label').childNodes[0].textContent.trim());
+  if(!o.steps.length) miss.push('خطوة واحدة على الأقل');
+  if(o.version && !/^\d+\.\d$/.test(o.version)) miss.push('صيغة الإصدار (مثال 1.0 — رقم عشري واحد)');
+  return miss;
+}
+
+/* ================= Google Sheets ================= */
+async function saveToSheet(){
+  const o=collect(), miss=validate(o);
+  if(miss.length){ toast('حقول مطلوبة: '+miss.join('، '),5000); return; }
+  if(loaded && o.sop_no===loaded.sop_no && loaded.status==='معتمد' && o.version===loaded.version &&
+     !confirm('هذا الإجراء معتمد بالإصدار '+o.version+'.\n\nموافق = حفظ التعديل على نفس الإصدار\nإلغاء = الرجوع لاستخدام زر «+0.1» لإنشاء إصدار جديد')) return;
+  $('#status').textContent='جارٍ الحفظ...';
+  try{
+    const j=await server('apiSave', o); if(!j || !j.ok) throw new Error((j&&j.error)||'فشل');
+    $('[data-f=sop_no]').value=j.sop_no; saveDraft();
+    dirty=false; loaded={sop_no:j.sop_no, version:o.version, status:o.status}; updateMode();
+    loadRecords(j.sop_no);
+    $('#status').textContent='حُفظ في Sheets ✓ '+j.sop_no; toast((j.created?'تم إنشاء ':'تم تحديث ')+j.sop_no+' — بواسطة '+j.by);
+  }catch(e){ const m=/NetworkError|Failed to fetch|disconnected/i.test(e.message)?'انقطع الاتصال بالخادم — تحقق من الشبكة ثم أعد المحاولة':e.message;
+    $('#status').textContent='تعذّر الحفظ: '+m; $('#status').title=m; toast('تعذّر الحفظ — '+m,9000); }
+}
+async function openList(){
+  $('#listModal').classList.add('open'); $('#listBody').textContent='جارٍ التحميل...';
+  try{ const j=await server('apiList'); records=j.items||[]; renderList(); }
+  catch(e){ $('#listBody').textContent='تعذّر التحميل: '+e.message; }
+}
+function badge(s){ const m={'مسودة':'b-draft','قيد المراجعة':'b-review','معتمد':'b-approved','ملغى':'b-retired'}; return `<span class="badge ${m[s]||'b-draft'}">${esc(s)}</span>`; }
+function renderList(){
+  const q=$('#listFilter').value.trim().toLowerCase(), today=new Date().toISOString().slice(0,10);
+  const rows=records.filter(r=>!q||(r.sop_no+' '+r.title_ar+' '+r.title_en).toLowerCase().includes(q));
+  $('#listBody').innerHTML=rows.length?`<table class="list-table"><tr><th>الرقم</th><th>العنوان</th><th>الإصدار</th><th>الحالة</th><th>المراجعة القادمة</th></tr>`+
+    rows.map(r=>`<tr onclick="loadRecord('${esc(r.sop_no)}')"><td dir="ltr">${esc(r.sop_no)}</td><td>${esc(r.title_ar)}</td><td>${esc(r.version)}</td><td>${badge(r.status)}</td><td style="${r.review_date&&r.review_date<today?'color:var(--err);font-weight:700':''}">${esc(r.review_date)}</td></tr>`).join('')+'</table>':'لا توجد سجلات.';
+}
+async function loadRecord(id){
+  try{ const j=await server('apiGet', id); if(!j.ok) throw new Error(j.error);
+    fill(j.data); dirty=false; loaded={sop_no:j.data.sop_no, version:j.data.version, status:j.data.status}; updateMode();
+    $('#recSel').value=id; $('#listModal').classList.remove('open'); window.scrollTo(0,0);
+    toast('تم تحميل '+id+' — يمكنك المراجعة والتعديل ثم الحفظ'); }catch(e){ toast('خطأ: '+e.message); $('#recSel').value=loaded?loaded.sop_no:''; }
+}
+
+/* ================= Record picker (dropdown) ================= */
+async function loadRecords(selectId, preloaded){
+  const sel=$('#recSel');
+  sel.innerHTML='<option value="">جارٍ تحميل السجلات...</option>';
+  try{
+    const j=preloaded || await server('apiList'); if(!j.ok) throw new Error(j.error||'فشل');
+    records=(j.items||[]).slice().sort((a,b)=>String(a.sop_no).localeCompare(String(b.sop_no),'en',{numeric:true}));
+    sel.innerHTML=`<option value="">— اختر إجراءً محفوظاً للمراجعة والتعديل (${records.length}) —</option>`+
+      records.map(r=>`<option value="${esc(r.sop_no)}">${esc(r.sop_no)} — ${esc(r.title_ar)} — الإصدار ${esc(r.version)} — ${esc(r.status)}</option>`).join('');
+    const want=selectId || (loaded&&loaded.sop_no) || $('[data-f=sop_no]').value;
+    if(want && records.some(r=>r.sop_no===want)) sel.value=want;
+  }catch(e){ sel.innerHTML='<option value="">تعذّر تحميل السجلات — اضغط «تحديث»</option>'; toast('تعذّر تحميل السجلات: '+e.message,6000); }
+}
+function pickRecord(id){
+  if(!id){ return; }
+  if(dirty && !confirm('توجد تعديلات غير محفوظة في النموذج الحالي. هل تريد تجاهلها وفتح '+id+'؟')){
+    $('#recSel').value=(loaded&&loaded.sop_no)||''; return; }
+  loadRecord(id);
+}
+function updateMode(){
+  const no=$('[data-f=sop_no]').value, tag=$('#modeTag');
+  if(no){ tag.className='mode edit'; tag.textContent='تعديل سجل محفوظ: '+no+' · الإصدار '+($('[data-f=version]').value||'—'); }
+  else { tag.className='mode new'; tag.textContent='إجراء جديد (لم يُحفظ بعد)'; }
+}
+
+/* ================= JSON ================= */
+function exportJSON(){
+  const o=collect(), b=new Blob([JSON.stringify(o,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(o.sop_no||'SOP-draft')+'_v'+(o.version||'0.0')+'.json'; a.click();
+}
+function importJSON(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ fill(JSON.parse(r.result)); dirty=true; loaded=null; $('#recSel').value=''; toast('تم الاستيراد'); }catch(x){ toast('ملف غير صالح'); } }; r.readAsText(f); e.target.value=''; }
+
+/* ================= Print ================= */
+function sec(ar,en){ return `<div class="sec">${ar} <span class="en">${en}</span></div>`; }
+function txt(v){ return `<div class="txt">${esc(v)||'—'}</div>`; }
+function tbl(name,rows){
+  const cfg=TABLES[name]; if(!rows.length) return txt('');
+  return `<table><thead><tr>${cfg.numbered?'<th style="width:28px">#</th>':''}${cfg.cols.map(c=>`<th${c[3]?` style="width:${Math.round(c[3]/9)}%"`:''}>${c[1]}</th>`).join('')}</tr></thead>`+
+    rows.map((r,i)=>`<tr>${cfg.numbered?`<td style="text-align:center;font-weight:700">${i+1}</td>`:''}${cfg.cols.map(c=>`<td style="white-space:pre-wrap">${esc(r[c[0]])}</td>`).join('')}</tr>`).join('')+'</table>';
+}
+function printDoc(){
+  const o=collect(), ch=[...o.channels, o.channel_other].filter(Boolean).join('، ');
+  const pre=(o.prerequisites||'').split('\n').filter(x=>x.trim());
+  const L=n=>window.LOGO_SRC?LOGO_SRC(n):'';
+  $('#printDoc').innerHTML=`<table class="pgwrap"><thead><tr><td><div class="pghead"><img class="s" src="${L('sru')}" alt="SRU"><div class="ref">${esc(o.sop_no)||'SOP'} · الإصدار ${esc(o.version)}<br>${esc(o.title_ar)}</div><img class="i" src="${L('ictd')}" alt="ICTD"></div></td></tr></thead><tbody><tr><td>
+  <h1>${esc(o.title_ar)||'إجراء تشغيلي قياسي'}</h1><div class="sub">${esc(o.title_en)}</div><div class="band"></div>
+  <table class="kv"><tr><th>رقم الإجراء</th><td dir="ltr" style="text-align:right">${esc(o.sop_no)||'—'}</td><th>الإصدار</th><td>${esc(o.version)}</td></tr>
+  <tr><th>الإدارة / الوحدة</th><td>${esc(o.department)}</td><th>الحالة</th><td>${esc(o.status)}</td></tr>
+  <tr><th>فئة الخدمة</th><td>${esc(o.category)}</td><th>التصنيف</th><td>${esc(o.classification)}</td></tr></table>
+  ${sec('1. الغرض','Purpose')}${txt(o.purpose)}
+  ${sec('2. النطاق','Scope')}<table><tr><th style="width:50%">يشمل</th><th>خارج النطاق</th></tr><tr><td style="white-space:pre-wrap">${esc(o.scope_in)}</td><td style="white-space:pre-wrap">${esc(o.scope_out)}</td></tr></table>
+  ${sec('3. مالك الإجراء','Owner')}<table class="kv"><tr><th>الدور</th><td>${esc(o.owner_role)}</td><th>الاسم</th><td>${esc(o.owner_name)}</td></tr><tr><th>البريد</th><td colspan="3" dir="ltr" style="text-align:right">${esc(o.owner_email)}</td></tr></table>
+  ${sec('4. قناة الطلب والمتطلبات المسبقة','Request Channel &amp; Prerequisites')}<table class="kv"><tr><th>قناة الطلب</th><td>${esc(ch)||'—'}</td></tr>
+  <tr><th>المتطلبات المسبقة</th><td>${pre.length?'<ol style="margin:0;padding-right:18px">'+pre.map(p=>`<li>${esc(p.replace(/^[-•\d.)\s]+/,''))}</li>`).join('')+'</ol>':'—'}</td></tr></table>
+  ${sec('5. الموافقات المطلوبة','Required Approvals')}${tbl('approvals',o.approvals)}
+  ${sec('6. خطوات التنفيذ','Procedure Steps')}${tbl('steps',o.steps)}
+  ${sec('7. زمن الإنجاز والتصعيد','Target Time &amp; Escalation')}<table class="kv"><tr><th>الزمن المستهدف</th><td>${esc(o.target_value)} ${esc(o.target_unit)}</td><th>الأولوية</th><td>${esc(o.priority)}</td></tr><tr><th>بدء احتساب الوقت</th><td colspan="3">${esc(o.sla_start)}</td></tr></table>${tbl('escalations',o.escalations)}
+  ${sec('8. التحقق وأدلة الإغلاق','Verification &amp; Closure Evidence')}<table><tr><th style="width:50%">طريقة التحقق</th><th>أدلة الإغلاق</th></tr><tr><td style="white-space:pre-wrap">${esc(o.verification)}</td><td style="white-space:pre-wrap">${esc(o.closure_evidence)}</td></tr></table>
+  ${sec('9. الاستثناءات','Exceptions')}${txt(o.exceptions)}
+  ${o.references?sec('10. المراجع','References')+txt(o.references):''}
+  ${sec('ضبط الوثيقة والاعتماد','Document Control &amp; Approval')}
+  <table class="kv"><tr><th>تاريخ السريان</th><td>${esc(o.effective_date)}</td><th>تاريخ المراجعة القادمة</th><td>${esc(o.review_date)}</td></tr></table>
+  <table class="sig"><tr><th></th><th>إعداد</th><th>مراجعة</th><th>اعتماد</th></tr>
+  <tr><th>الاسم</th><td>${esc(o.prepared_by)}</td><td>${esc(o.reviewed_by)}</td><td>${esc(o.approved_by)}</td></tr>
+  <tr><th>التوقيع</th><td></td><td></td><td></td></tr><tr><th>التاريخ</th><td></td><td></td><td>${esc(o.approval_date)}</td></tr></table>
+  ${sec('سجل التعديلات','Revision History')}${tbl('revisions',o.revisions)}
+  <div class="foot"><span>${esc(o.sop_no)} · الإصدار ${esc(o.version)} · ${esc(o.classification)}</span><span>نموذج SRU-FRM-SOP-01 · إصدار النموذج ${TEMPLATE_VERSION}</span><a href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center"><img src="${L('itoc')}" alt="ITOC" style="height:26px"></a></div></td></tr></tbody></table>`;
+  const old=document.title; document.title=(o.sop_no||'SOP')+'_v'+(o.version||'')+'_'+(o.title_en||o.title_ar||'').replace(/\s+/g,'-');
+  window.print(); setTimeout(()=>document.title=old,500);
+}
+
+/* ================= New / Example ================= */
+function newSop(){ if(!confirm('بدء إجراء جديد؟ سيتم مسح النموذج الحالي.')) return;
+  fill({unit_code:'ICTD',status:'مسودة',classification:'داخلي',version:'1.0',department:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',review_cycle:'12',target_unit:'ساعة عمل',priority:'متوسطة',
+        revisions:[{version:'1.0',date:new Date().toISOString().slice(0,10),change:'الإصدار الأول',by:''}]}); dirty=false; loaded=null; $('#recSel').value=''; window.scrollTo(0,0); }
+
+const EXAMPLE = {
+  unit_code:'ICTD', sop_no:'', status:'معتمد', classification:'داخلي',
+  title_ar:'تهيئة حساب مستخدم جديد لمنسوب الجامعة', title_en:'New Staff User Account Provisioning',
+  department:'الإدارة التنفيذية للاتصالات وتقنية المعلومات — العمليات التقنية', category:'إدارة الهوية والصلاحيات',
+  purpose:'توحيد خطوات إنشاء وتفعيل حساب المستخدم الموحّد (Active Directory / Microsoft 365) للمنسوب الجديد، بما يضمن جاهزيته من اليوم الأول للعمل ومنح الصلاحيات وفق مبدأ الحد الأدنى من الصلاحيات.',
+  scope_in:'- منسوبو الجامعة الجدد (أكاديميون وإداريون) بعقود رسمية.\n- إنشاء الحساب، البريد الجامعي، ترخيص Microsoft 365، مجموعات الأمان، وتفعيل المصادقة متعددة العوامل.',
+  scope_out:'- حسابات الطلاب (إجراء مستقل).\n- صلاحيات Oracle Fusion ERP (تُطلب عبر إجراء منح صلاحيات الأنظمة المؤسسية).\n- حسابات المتعاقدين والموردين المؤقتة.',
+  owner_role:'مدير العمليات التقنية', owner_name:'Mohamed ElMahdy', owner_email:'m.elmahdy@sr.edu.sa',
+  channels:['بوابة الخدمات (ServiceDesk Plus ESM)','تلقائي من نظام آخر'],
+  channel_other:'يُنشأ الطلب تلقائياً عند اعتماد قرار التعيين من الموارد البشرية، أو يدوياً عبر البوابة من مدير الوحدة.',
+  prerequisites:'قرار تعيين معتمد من الموارد البشرية يتضمن الرقم الوظيفي والمسمى والوحدة.\nرقم الهوية الوطنية / الإقامة ورقم الجوال للتحقق.\nتوقيع المنسوب على سياسة الاستخدام المقبول (AUP).\nتحديد مدير الوحدة للمجموعات والصلاحيات المطلوبة.',
+  approvals:[{level:'1',role:'مدير الوحدة الطالبة',when:'دائماً — تأكيد المجموعات والصلاحيات',sla:'4 ساعات عمل'},
+             {level:'2',role:'الأمن السيبراني',when:'عند طلب صلاحيات مميزة (Privileged) أو وصول عن بُعد VPN',sla:'8 ساعات عمل'}],
+  steps:[
+    {desc:'استقبال الطلب في بوابة الخدمات والتحقق من اكتمال المرفقات (قرار التعيين، نموذج AUP).',role:'موظف مكتب الخدمة',duration:'30 دقيقة',output:'تذكرة مصنّفة ومسندة'},
+    {desc:'مطابقة بيانات المنسوب مع نظام الموارد البشرية (الرقم الوظيفي، الاسم، الوحدة).',role:'موظف مكتب الخدمة',duration:'30 دقيقة',output:'ملاحظة تحقق في التذكرة'},
+    {desc:'إنشاء الحساب في Active Directory وفق معيار التسمية المعتمد وإسناده للوحدة التنظيمية (OU) الصحيحة.',role:'مسؤول الأنظمة',duration:'30 دقيقة',output:'اسم المستخدم (UPN)'},
+    {desc:'مزامنة الحساب مع Microsoft Entra ID وإسناد ترخيص Microsoft 365 A1 وإنشاء صندوق البريد.',role:'مسؤول الأنظمة',duration:'1 ساعة',output:'بريد جامعي فعّال'},
+    {desc:'إضافة الحساب إلى مجموعات الأمان والتوزيع المعتمدة من مدير الوحدة.',role:'مسؤول الأنظمة',duration:'30 دقيقة',output:'قائمة المجموعات'},
+    {desc:'فرض تفعيل المصادقة متعددة العوامل (MFA) عند أول تسجيل دخول.',role:'مختص الأمن السيبراني',duration:'15 دقيقة',output:'سياسة MFA مطبّقة'},
+    {desc:'تسليم بيانات الدخول المؤقتة للمنسوب عبر قناة آمنة (رسالة نصية للجوال المسجل) مع إلزام تغيير كلمة المرور.',role:'موظف مكتب الخدمة',duration:'15 دقيقة',output:'إشعار تسليم'},
+    {desc:'تأكيد نجاح الدخول مع المنسوب وإغلاق التذكرة مع إرفاق أدلة الإغلاق.',role:'موظف مكتب الخدمة',duration:'30 دقيقة',output:'تذكرة مغلقة'}],
+  target_value:'1', target_unit:'يوم عمل', priority:'متوسطة',
+  sla_start:'من لحظة اكتمال الموافقات والمتطلبات المسبقة في التذكرة.',
+  escalations:[{level:'1',trigger:'تجاوز 6 ساعات عمل دون إنجاز',to:'قائد فريق مكتب الخدمة',action:'إعادة الإسناد ومتابعة العائق'},
+               {level:'2',trigger:'تجاوز يوم عمل واحد أو فشل المزامنة/الترخيص',to:'مدير العمليات التقنية',action:'تدخل فني وإبلاغ الوحدة الطالبة بالموعد الجديد'},
+               {level:'3',trigger:'تجاوز 3 أيام عمل أو تأثير على بدء عمل منسوب قيادي',to:'المدير التنفيذي للاتصالات وتقنية المعلومات (CIO)',action:'قرار إداري وتوجيه الموارد'}],
+  verification:'- تسجيل دخول ناجح للمنسوب إلى البريد و Microsoft 365.\n- ظهور الحساب في المجموعات الصحيحة فقط (مراجعة من مسؤول الأنظمة).\n- حالة MFA = Enforced في Entra ID.',
+  closure_evidence:'- لقطة شاشة لخصائص الحساب (OU، المجموعات، الترخيص).\n- تأكيد المنسوب داخل التذكرة أو رسالة البريد الأولى.\n- موافقة مدير الوحدة مرفقة بالتذكرة.',
+  exceptions:'- الحالات العاجلة (بدء العمل خلال أقل من 24 ساعة): تُعالج بأولوية عالية بموافقة مدير العمليات التقنية، وتُستكمل المستندات خلال 3 أيام عمل وإلا يُعطَّل الحساب.\n- غياب قرار التعيين: لا يُنشأ الحساب، ويُعاد الطلب للموارد البشرية.\n- أي استثناء يُوثَّق في التذكرة مع اسم المعتمِد وسببه.',
+  references:'- سياسة إدارة الهوية والوصول.\n- سياسة الاستخدام المقبول (AUP).\n- ضوابط الهيئة الوطنية للأمن السيبراني (ECC) — إدارة الهويات والصلاحيات.\n- معيار تسمية الحسابات المعتمد.',
+  version:'1.0', effective_date:'2026-10-01', review_cycle:'12', review_date:'2027-09-28',
+  prepared_by:'Mohamed ElMahdy — مدير العمليات التقنية', reviewed_by:'مدير الأمن السيبراني', approved_by:'المدير التنفيذي للاتصالات وتقنية المعلومات (CIO)', approval_date:'2026-09-28',
+  revisions:[{version:'1.0',date:'2026-09-28',change:'الإصدار الأول للإجراء',by:'Mohamed ElMahdy'}]
+};
+function loadExample(){ if(dirty && !confirm('توجد تعديلات غير محفوظة. هل تريد استبدالها بالمثال؟')) return; fill(JSON.parse(JSON.stringify(EXAMPLE))); dirty=false; loaded=null; $('#recSel').value=''; window.scrollTo(0,0); toast('تم تحميل المثال — عدّل عليه أو اضغط «جديد»'); }
+
+/* ================= Init ================= */
+$('#tplVer').textContent=TEMPLATE_VERSION;
+(function init(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)); }catch(e){}
+  if(d && d.title_ar) fill(d); else fill(JSON.parse(JSON.stringify(EXAMPLE)));
+  icons(); loadRecords(null, DATA && !DATA.error ? {ok:true, items:DATA.items||[]} : null);
+})();
+</script>

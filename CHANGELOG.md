@@ -1,5 +1,10 @@
 # CHANGELOG — SRU SOP Template (SRU-FRM-SOP-01)
 
+## 2.2 — 2026-10-14
+- Fix: form script did not run when served by Apps Script ("applyLogos is not defined"). The page logic now lives in a new file `App.html`, included raw with `include('App')`, so Apps Script's template engine no longer processes it. `Index.html` keeps only markup and the three template values.
+- Error reporter keeps the first page error and shows its line number.
+- Logos still appear (ITOC-site fallback) even if the page logic fails.
+
 ## 2.1 — 2026-10-14
 - Fix: logos missing and form not loading (empty form, dropdown stuck on «جارٍ تحميل السجلات») when `Logos.html` was pasted incompletely — its unterminated script swallowed the form script.
 - `Logos` is now included after the form script, so a damaged Logos file can no longer stop the form.
