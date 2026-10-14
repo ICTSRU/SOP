@@ -1,5 +1,19 @@
 # CHANGELOG — SRU SOP Template (SRU-FRM-SOP-01)
 
+## 2.0 — 2026-10-14
+Secure edition, built on **SRU Secure Access Kit v1.4**.
+- Form moved into Apps Script (`Index.html`), served only after Google sign-in with an @sr.edu.sa account.
+- Access list (`AllowedUsers`, 13 ICTD accounts by default) checked on page load **and** on every save/read (`requireSruUser_`).
+- Every sign-in logged to `AccessLog` (date, time, day, e-mail, result, version); denied and non-listed attempts logged too.
+- Public JSON API removed (`doPost`, `?action=list/get`); the page uses guarded `google.script.run` calls `apiList`, `apiGet`, `apiSave`.
+- SOP logic split into `Sop.gs`; kit `Code.gs` holds access control.
+- New audit columns `created_by`, `updated_by`; existing sheets are widened automatically.
+- Signed-in e-mail shown in the header; save confirmation shows who saved.
+- Logos from the kit's `Logos.html` (no external image requests); ITOC logo embedded in the screen footer and print footer.
+- Saved-SOPs list delivered with the page (no extra round trip).
+- Branded ITOC sign-in landing page for GitHub Pages (`github-landing/`).
+- Removed: URL settings dialog.
+
 ## 1.8 — 2026-09-30
 - Fix: saving failed with "Run setup() first" when the SOPs/Steps tabs had not been created. Code.gs (backend 1.2) now creates the tabs automatically on the first read or save (`ensureSheets()`); `setup()` is only needed for the weekly reminder trigger.
 - Form now shows the exact save error in the status bar and toast instead of a generic "تعذّر الحفظ".

@@ -1,49 +1,64 @@
-# SRU SOP Template — نموذج إجراء تشغيلي قياسي
+# SRU SOP Register — نموذج إجراء تشغيلي قياسي
 
-**Form code:** SRU-FRM-SOP-01 · **Version:** 1.8 · **Owner:** ICTD — IT Operations
+**Form code:** SRU-FRM-SOP-01 · **Version:** 2.0 · **Owner:** ICTD — ITOC (IT Operations Center)
+**Built on:** SRU Secure Access Kit v1.4
 
-A bilingual (Arabic RTL / English) web form for writing Standard Operating Procedures, printing them as A4 / PDF, and keeping a central register in Google Sheets.
+The SOP form now runs **inside Google Apps Script**. Only Sulaiman Al Rajhi University accounts (@sr.edu.sa) that are on the access list can open it, read SOPs or save them. Every sign-in is logged.
+
+```
+ictsru.github.io/SOP  →  Google sign-in (@sr.edu.sa)  →  Apps Script Web App (SOP form)
+ (branded landing)          (Google's own page)          domain + access-list check on every call
+```
 
 ## Contents
 
 | Path | Purpose |
 |---|---|
-| `index.html` | The form (fill → print/PDF → save to Sheets) |
-| `apps-script/Code.gs` | Google Sheets backend (save, auto-numbering, register, reminders) |
-| `assets/` | Official `sru-logo.png` and `ictd-logo.png` (already embedded in `index.html`) |
-| `CHANGELOG.md` | Change record |
+| `apps-script/Code.gs` | Secure Access Kit: CONFIG, `doGet` with domain/list check, `requireSruUser_()`, AccessLog, AllowedUsers, sheet menu |
+| `apps-script/Sop.gs` | SOP logic: `apiList` / `apiGet` / `apiSave` (each guarded), auto-numbering, SOPs + Steps tabs, review reminders |
+| `apps-script/Index.html` | The SOP form (served by Apps Script, shows the signed-in e-mail) |
+| `apps-script/Logos.html` | SRU, ICTD, ITOC logos (embedded) |
+| `apps-script/Denied.html` | Page for non-university or non-listed accounts |
+| `github-landing/` | Branded ITOC sign-in page for GitHub Pages (CONFIG already filled) |
 
-## SOP sections covered
+## Sheet
 
-1. Identification — unit code, auto SOP number, status, classification, titles, category
-2. Purpose, scope (in / out), owner (role, name, email)
-3. Request channel, prerequisites, required approvals (table)
-4. Numbered steps with responsible role, duration, output (reorderable)
-5. Target completion time, priority, SLA start, escalation levels (table)
-6. Verification, closure evidence, exceptions, references
-7. Document control — version, effective date, review cycle → next review date, prepared / reviewed / approved, revision history
+`سجل الإجراءات التشغيلية - SRU SOP Register`
+https://docs.google.com/spreadsheets/d/1_JJJYaSTAgGn4e3kUc58E71YJaZMqEqoV6Mp-hNzhig/edit
 
-A worked example (**New Staff User Account Provisioning**) loads by default and via **تحميل المثال**.
-
-## Setup (≈10 minutes)
-
-1. Open the Sheet `سجل الإجراءات التشغيلية - SRU SOP Register`: https://docs.google.com/spreadsheets/d/1_JJJYaSTAgGn4e3kUc58E71YJaZMqEqoV6Mp-hNzhig/edit
-2. **Extensions → Apps Script**, paste `apps-script/Code.gs`, save.
-3. Run **`setup()`** once and approve — creates the `SOPs` and `Steps` tabs and the weekly reminder trigger.
-4. **Deploy → New deployment → Web app** — Execute as *Me*, access *Anyone within sr.edu.sa*.
-5. Web App URL (already pinned in `index.html`): https://script.google.com/macros/s/AKfycbxOekzfS17J1t3bHf2YIALRZ_i6eI5RDKWdfiIGvQbPfUnukKUUAstwGg5RLSRmpaof/exec
-6. Host `index.html` + `assets/` on GitHub Pages (or open locally).
-
-## How it works
-
-| Action | Result |
+| Tab | Content |
 |---|---|
-| حفظ في Google Sheets | Validates required fields → first save allocates `{UNIT}-SOP-NNN` (e.g. `ICTD-SOP-001`); later saves update the same row |
-| Saved SOPs dropdown | Pick any saved SOP to review/edit it; save updates the same record |
-| السجل | Lists saved SOPs with status and review date (overdue in red); click to reload into the form |
-| طباعة / PDF | Builds a clean A4 document with signature block; filename suggested as `SOPNo_vX.Y_Title` |
-| +0.1 | Next version (1.9 → 2.0), adds a revision-history row, resets status to Draft |
-| JSON / استيراد | Offline backup and transfer of a single SOP |
-| Auto draft | Every edit is saved in the browser, so nothing is lost on refresh |
+| `SOPs` | One row per SOP (42 columns incl. `created_by`, `updated_by`) |
+| `Steps` | One row per step |
+| `AllowedUsers` | Who may open the platform (email · name · role · active · notes) |
+| `AccessLog` | Every sign-in: date, time, day, e-mail, result, version |
 
-**Automation:** every Sunday 07:00 (Riyadh), owners of SOPs due for review within 30 days (or overdue) get an email, and a digest goes to `m.elmahdy@sr.edu.sa`. Adjust `REMINDER_DAYS` / `ADMIN_EMAIL` in `Code.gs`.
+Tabs are created automatically. The existing "Untitled" tab becomes `SOPs`.
+
+## Upgrade from v1.x (same project, same URL) — ≈10 min
+
+1. Open the Sheet → **Extensions ▸ Apps Script**.
+2. **Code.gs**: replace all content with `apps-script/Code.gs`.
+3. **+ ▸ Script** → name it `Sop` → paste `apps-script/Sop.gs`.
+4. **+ ▸ HTML** three times → `Index`, `Logos`, `Denied` → paste each file (names without `.html`).
+5. Save. Run **`setup`** once (tabs + weekly reminder), then **`setupAccessList`** (adds the 13 ICTD accounts). Approve permissions.
+6. **Deploy ▸ Manage deployments ▸ ✏️** → Version: **New version** · Execute as: **Me** · Who has access: **Anyone within Sulaiman Al Rajhi University** → Deploy. The URL stays the same.
+7. **GitHub:** create repo `ictsru/SOP`, upload the contents of `github-landing/`, enable Pages (main / root). Link: `https://ictsru.github.io/SOP/`.
+8. **Test:** own account ✓ · team member ✓ · personal Gmail → refused ✓ · @sr.edu.sa not on the list → "الوصول مقيّد" ✓.
+9. Add the GitHub link to the ITOC Index (`Links` sheet).
+
+The old GitHub-hosted form (v1.x `index.html` calling `/exec` with `fetch`) no longer works after step 6 — remove or redirect it to the landing page.
+
+## Access list
+
+- `ACCESS_MODE = 'LIST'` (in `Code.gs`): only active rows in `AllowedUsers`, plus `OWNER_EMAILS`.
+- Add a row to grant access; untick **active** to suspend; changes apply within 2 minutes.
+- Use `'DOMAIN'` to open it to every @sr.edu.sa account.
+
+## Features (unchanged from v1.8)
+
+Saved-SOPs dropdown (review/edit), auto-numbering `{UNIT}-SOP-NNN`, +0.1 version helper, approved-version guard, print/PDF with logos on every page and ITOC footer, JSON export/import, local draft, weekly review reminders (Sunday 07:00 Riyadh).
+
+## Updating code later
+
+Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version — the URL stays the same.
