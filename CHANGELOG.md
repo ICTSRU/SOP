@@ -1,5 +1,11 @@
 # CHANGELOG — SRU SOP Template (SRU-FRM-SOP-01)
 
+## 2.1 — 2026-10-14
+- Fix: logos missing and form not loading (empty form, dropdown stuck on «جارٍ تحميل السجلات») when `Logos.html` was pasted incompletely — its unterminated script swallowed the form script.
+- `Logos` is now included after the form script, so a damaged Logos file can no longer stop the form.
+- Logo fallback: if the embedded logos are missing, the page uses the images on the ITOC site (ictsru.github.io/ITOC/assets).
+- Page errors are shown in the status bar instead of failing silently.
+
 ## 2.0 — 2026-10-14
 Secure edition, built on **SRU Secure Access Kit v1.4**.
 - Form moved into Apps Script (`Index.html`), served only after Google sign-in with an @sr.edu.sa account.

@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+window.addEventListener('error', function (e) {
+  var show = function () { var s = document.getElementById('status'); if (s) { s.textContent = 'خطأ في الصفحة: ' + (e.message || e); s.title = (e.filename || '') + ':' + (e.lineno || ''); } };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', show) : show();
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <style>
 :root{
@@ -154,7 +160,7 @@ input[readonly]{background:var(--purple-light)}
       <h1>نموذج إجراء تشغيلي قياسي <span class="en">Standard Operating Procedure (SOP) Template</span></h1>
     </div>
     <span class="userchip" title="مسجّل الدخول بحساب الجامعة"><?= userEmail ?></span>
-    <span class="verchip">إصدار النموذج <b id="tplVer">2.0</b> · SRU-FRM-SOP-01</span>
+    <span class="verchip">إصدار النموذج <b id="tplVer">2.1</b> · SRU-FRM-SOP-01</span>
   </div>
 </div>
 <div class="diag"></div>
@@ -295,7 +301,7 @@ input[readonly]{background:var(--purple-light)}
 
 <footer class="sitefoot no-print">
   <div class="container">
-    <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات · SRU-FRM-SOP-01 · الإصدار <b class="tplVer2">2.0</b></span>
+    <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات · SRU-FRM-SOP-01 · الإصدار <b class="tplVer2">2.1</b></span>
     <a class="itoc-link" href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center">
       <img data-logo="itoc" alt="ITOC — IT Operations Center">
     </a>
@@ -314,12 +320,17 @@ input[readonly]{background:var(--purple-light)}
 
 <div id="toast"></div>
 
-<?!= include('Logos') ?>
 <script>
 var DATA = <?!= dataJson ?>;
-[].forEach.call(document.querySelectorAll("img[data-logo]"), function (img) { img.src = (window.ITOC_LOGOS||{})[img.getAttribute("data-logo")] || ""; });
+/* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
+var LOGO_WEB = { sru: 'https://ictsru.github.io/ITOC/assets/sru-logo.png',
+                 ictd: 'https://ictsru.github.io/ITOC/assets/ictd-logo.png',
+                 itoc: 'https://ictsru.github.io/ITOC/assets/itoc-logo.png' };
+window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || LOGO_WEB[k] || ''; };
+function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
+applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '2.0';
+const TEMPLATE_VERSION = '2.1';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -489,7 +500,7 @@ function tbl(name,rows){
 function printDoc(){
   const o=collect(), ch=[...o.channels, o.channel_other].filter(Boolean).join('، ');
   const pre=(o.prerequisites||'').split('\n').filter(x=>x.trim());
-  const L=n=>(window.ITOC_LOGOS&&ITOC_LOGOS[n])||'';
+  const L=n=>window.LOGO_SRC?LOGO_SRC(n):'';
   $('#printDoc').innerHTML=`<table class="pgwrap"><thead><tr><td><div class="pghead"><img class="s" src="${L('sru')}" alt="SRU"><div class="ref">${esc(o.sop_no)||'SOP'} · الإصدار ${esc(o.version)}<br>${esc(o.title_ar)}</div><img class="i" src="${L('ictd')}" alt="ICTD"></div></td></tr></thead><tbody><tr><td>
   <h1>${esc(o.title_ar)||'إجراء تشغيلي قياسي'}</h1><div class="sub">${esc(o.title_en)}</div><div class="band"></div>
   <table class="kv"><tr><th>رقم الإجراء</th><td dir="ltr" style="text-align:right">${esc(o.sop_no)||'—'}</td><th>الإصدار</th><td>${esc(o.version)}</td></tr>
@@ -567,5 +578,8 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
   icons(); loadRecords(null, DATA && !DATA.error ? {ok:true, items:DATA.items||[]} : null);
 })();
 </script>
+<!-- Logos last: if the Logos file is damaged, only the logos are affected, never the form -->
+<?!= include('Logos') ?>
+<script>applyLogos(); if (!window.ITOC_LOGOS) console.warn('Logos.html missing or incomplete — using ITOC site images');</script>
 </body>
 </html>
