@@ -11,7 +11,8 @@ window.__pageErrors = [];
 window.addEventListener('error', function (e) {
   window.__pageErrors.push(e);
   if (window.__pageErrors.length > 1) return;                 // keep the FIRST error visible
-  var msg = 'خطأ في الصفحة: ' + (e.message || e) + (e.lineno ? ' (سطر ' + e.lineno + ')' : '');
+  var src = String(e.filename || '').split('/').pop().split('?')[0];
+  var msg = 'خطأ في الصفحة: ' + (e.message || e) + (e.lineno ? ' (' + (src || 'page') + ' سطر ' + e.lineno + ')' : '');
   var show = function () { var s = document.getElementById('status'); if (s) { s.textContent = msg; s.title = msg; } };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', show) : show();
 });
@@ -164,7 +165,7 @@ input[readonly]{background:var(--purple-light)}
       <h1>نموذج إجراء تشغيلي قياسي <span class="en">Standard Operating Procedure (SOP) Template</span></h1>
     </div>
     <span class="userchip" title="مسجّل الدخول بحساب الجامعة"><?= userEmail ?></span>
-    <span class="verchip">إصدار النموذج <b id="tplVer">2.2</b> · SRU-FRM-SOP-01</span>
+    <span class="verchip">إصدار النموذج <b id="tplVer">2.3</b> · SRU-FRM-SOP-01</span>
   </div>
 </div>
 <div class="diag"></div>
@@ -305,7 +306,7 @@ input[readonly]{background:var(--purple-light)}
 
 <footer class="sitefoot no-print">
   <div class="container">
-    <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات · SRU-FRM-SOP-01 · الإصدار <b class="tplVer2">2.2</b></span>
+    <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات · SRU-FRM-SOP-01 · الإصدار <b class="tplVer2">2.3</b></span>
     <a class="itoc-link" href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center">
       <img data-logo="itoc" alt="ITOC — IT Operations Center">
     </a>
@@ -325,7 +326,13 @@ input[readonly]{background:var(--purple-light)}
 <div id="toast"></div>
 
 <script>var DATA = <?!= dataJson ?>;</script>
-<?!= include('App') ?>
+<script src="<?= appJsUrl ?>"></script>
+<script>
+if (!window.__APP_LOADED) {
+  var s = document.getElementById('status');
+  if (s && !(window.__pageErrors && window.__pageErrors.length)) s.textContent = 'تعذّر تحميل app.js من GitHub — تحقّق من رفعه إلى المستودع ictsru/SOP';
+}
+</script>
 <!-- Logos last: if the Logos file is damaged, only the logos are affected, never the form -->
 <?!= include('Logos') ?>
 <script>

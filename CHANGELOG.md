@@ -1,5 +1,11 @@
 # CHANGELOG — SRU SOP Template (SRU-FRM-SOP-01)
 
+## 2.3 — 2026-10-14
+- Fix: form logic still failed inside the Apps Script page ("Unexpected end of input"). The page logic is now `app.js`, hosted on GitHub Pages (`ictsru/SOP`) and loaded with `<script src>` (`APP_JS_URL` in Code.gs). No large script is pasted into Apps Script any more; `App.html` removed.
+- `app.js` holds no data or secrets; every read/save is still checked on the server.
+- Version query (`?v=2.3`) refreshes browser caches after each release.
+- Status bar says clearly if `app.js` could not be loaded; page errors now name the file and line.
+
 ## 2.2 — 2026-10-14
 - Fix: form script did not run when served by Apps Script ("applyLogos is not defined"). The page logic now lives in a new file `App.html`, included raw with `include('App')`, so Apps Script's template engine no longer processes it. `Index.html` keeps only markup and the three template values.
 - Error reporter keeps the first page error and shows its line number.

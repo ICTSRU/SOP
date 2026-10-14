@@ -1,6 +1,6 @@
 # SRU SOP Register — نموذج إجراء تشغيلي قياسي
 
-**Form code:** SRU-FRM-SOP-01 · **Version:** 2.2 · **Owner:** ICTD — ITOC (IT Operations Center)
+**Form code:** SRU-FRM-SOP-01 · **Version:** 2.3 · **Owner:** ICTD — ITOC (IT Operations Center)
 **Built on:** SRU Secure Access Kit v1.4
 
 The SOP form now runs **inside Google Apps Script**. Only Sulaiman Al Rajhi University accounts (@sr.edu.sa) that are on the access list can open it, read SOPs or save them. Every sign-in is logged.
@@ -17,10 +17,9 @@ ictsru.github.io/SOP  →  Google sign-in (@sr.edu.sa)  →  Apps Script Web App
 | `apps-script/Code.gs` | Secure Access Kit: CONFIG, `doGet` with domain/list check, `requireSruUser_()`, AccessLog, AllowedUsers, sheet menu |
 | `apps-script/Sop.gs` | SOP logic: `apiList` / `apiGet` / `apiSave` (each guarded), auto-numbering, SOPs + Steps tabs, review reminders |
 | `apps-script/Index.html` | The SOP form page (served by Apps Script, shows the signed-in e-mail) |
-| `apps-script/App.html` | Page logic (JavaScript), included raw by Index — no template processing |
 | `apps-script/Logos.html` | SRU, ICTD, ITOC logos (embedded) |
 | `apps-script/Denied.html` | Page for non-university or non-listed accounts |
-| `github-landing/` | Branded ITOC sign-in page for GitHub Pages (CONFIG already filled) |
+| `github-landing/` | Branded ITOC sign-in page **and `app.js` (page logic)** for GitHub Pages repo `ictsru/SOP` |
 
 ## Sheet
 
@@ -41,10 +40,10 @@ Tabs are created automatically. The existing "Untitled" tab becomes `SOPs`.
 1. Open the Sheet → **Extensions ▸ Apps Script**.
 2. **Code.gs**: replace all content with `apps-script/Code.gs`.
 3. **+ ▸ Script** → name it `Sop` → paste `apps-script/Sop.gs`.
-4. **+ ▸ HTML** four times → `Index`, `App`, `Logos`, `Denied` → paste each file (names without `.html`).
+4. **+ ▸ HTML** three times → `Index`, `Logos`, `Denied` → paste each file (names without `.html`).
 5. Save. Run **`setup`** once (tabs + weekly reminder), then **`setupAccessList`** (adds the 13 ICTD accounts). Approve permissions.
 6. **Deploy ▸ Manage deployments ▸ ✏️** → Version: **New version** · Execute as: **Me** · Who has access: **Anyone within Sulaiman Al Rajhi University** → Deploy. The URL stays the same.
-7. **GitHub:** create repo `ictsru/SOP`, upload the contents of `github-landing/`, enable Pages (main / root). Link: `https://ictsru.github.io/SOP/`.
+7. **GitHub:** create repo `ictsru/SOP`, upload the contents of `github-landing/` (`index.html`, `app.js`, `assets/`, `.nojekyll`) with **Add file ▸ Upload files**, enable Pages (main / root). Link: `https://ictsru.github.io/SOP/`. The form needs `https://ictsru.github.io/SOP/app.js` to be live.
 8. **Test:** own account ✓ · team member ✓ · personal Gmail → refused ✓ · @sr.edu.sa not on the list → "الوصول مقيّد" ✓.
 9. Add the GitHub link to the ITOC Index (`Links` sheet).
 

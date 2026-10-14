@@ -1,10 +1,11 @@
 /**
  * =====================================================================
- *  SRU SOP Register (SRU-FRM-SOP-01) v2.2 — built on SRU Secure Access Kit v1.4
+ *  SRU SOP Register (SRU-FRM-SOP-01) v2.3 — built on SRU Secure Access Kit v1.4
  *  Access: Sulaiman Al Rajhi University Google accounts (@sr.edu.sa) only
  *  ICTD — ITOC
  * ---------------------------------------------------------------------
- *  Files:  Code.gs (access) · Sop.gs (SOP logic) · Index.html · App.html · Logos.html · Denied.html
+ *  Files:  Code.gs (access) · Sop.gs (SOP logic) · Index.html · Logos.html · Denied.html
+ *          + app.js on GitHub Pages (APP_JS_URL)
  *  Deploy: Deploy ▸ New deployment ▸ Web app
  *          Execute as: Me  ·  Who has access: Anyone within Sulaiman Al Rajhi University
  *  Access log: every sign-in → sheet "AccessLog" (see LOG_* settings)
@@ -15,9 +16,10 @@
 /* ▼▼▼ CONFIG — change per platform ▼▼▼ */
 const APP_NAME       = 'نموذج إجراء تشغيلي قياسي';   // Arabic title shown in the page
 const APP_NAME_EN    = 'SRU SOP Register';     // English name
-const APP_VERSION    = '2.2';
+const APP_VERSION    = '2.3';
 const ALLOWED_DOMAIN = 'sr.edu.sa';
 const FAVICON_URL    = 'https://ictsru.github.io/ITOC/assets/itoc-logo.png';
+const APP_JS_URL     = 'https://ictsru.github.io/SOP/app.js';   // page logic, uploaded to the GitHub repo ictsru/SOP
 
 /* Access log */
 const LOG_ENABLED        = true;
@@ -76,6 +78,7 @@ function doGet() {
   t.appNameEn = APP_NAME_EN;
   t.version   = APP_VERSION;
   t.userEmail = email;
+  t.appJsUrl  = APP_JS_URL + '?v=' + APP_VERSION;   // version busts the browser cache after each release
   t.dataJson  = safeJson_(getInitialData_());   // data rendered into the page (no extra round trip)
   const out = t.evaluate().setTitle(APP_NAME_EN + ' | ' + APP_NAME)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
