@@ -1,4 +1,4 @@
-/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v2.3
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v2.4
    Hosted on GitHub Pages (ictsru/SOP) and loaded by the Apps Script page.
    Contains no data or secrets: every read/save is checked on the server (requireSruUser_). */
 /* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
@@ -9,7 +9,7 @@ window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || 
 function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
 applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '2.3';
+const TEMPLATE_VERSION = '2.4';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -32,20 +32,22 @@ function toast(msg, ms=2800){ const t=$('#toast'); t.textContent=msg; t.classLis
 function icons(){ if(window.lucide) lucide.createIcons(); }
 
 /* ================= Dynamic tables ================= */
+const ROW_LABEL = { approvals:'موافقة', steps:'الخطوة', escalations:'مستوى تصعيد', revisions:'تعديل' };
 function renderTable(name){
   const cfg=TABLES[name], rows=data[name], el=$('#t_'+name);
-  let h='<thead><tr>'+(cfg.numbered?'<th>#</th>':'')+cfg.cols.map(c=>`<th${c[3]?` style="width:${c[3]}px"`:''}>${c[1]} <span class="en" style="color:#e6dcf5">${c[2]}</span></th>`).join('')+'<th></th></tr></thead><tbody>';
-  rows.forEach((r,i)=>{
-    h+='<tr>'+(cfg.numbered?`<td class="idx">${i+1}</td>`:'');
-    cfg.cols.forEach(c=>{
-      const v=esc(r[c[0]]);
-      h+= c[4] ? `<td><textarea data-t="${name}" data-i="${i}" data-k="${c[0]}">${v}</textarea></td>`
-               : `<td><input ${c[5]?`type="${c[5]}"`:''} data-t="${name}" data-i="${i}" data-k="${c[0]}" value="${v}"></td>`;
-    });
-    h+='<td class="act">'+(cfg.move?`<button class="btn icon sm" title="أعلى" onclick="moveRow('${name}',${i},-1)"><i data-lucide="arrow-up"></i></button><button class="btn icon sm" title="أسفل" onclick="moveRow('${name}',${i},1)"><i data-lucide="arrow-down"></i></button>`:'')+
-       `<button class="btn icon sm" title="حذف" onclick="delRow('${name}',${i})"><i data-lucide="trash-2"></i></button></td></tr>`;
-  });
-  el.innerHTML=h+'</tbody>'; icons();
+  el.innerHTML=rows.map((r,i)=>{
+    const head=`<div class="rh"><span>${ROW_LABEL[name]} ${i+1}</span><span class="sp"></span>`+
+      (cfg.move?`<button class="btn icon sm" title="أعلى" onclick="moveRow('${name}',${i},-1)"><i data-lucide="arrow-up"></i></button><button class="btn icon sm" title="أسفل" onclick="moveRow('${name}',${i},1)"><i data-lucide="arrow-down"></i></button>`:'')+
+      `<button class="btn icon sm" title="حذف" onclick="delRow('${name}',${i})"><i data-lucide="trash-2"></i></button></div>`;
+    const fields=cfg.cols.map(c=>{
+      const v=esc(r[c[0]]), wide=c[4]||!c[3];
+      const input=c[4]?`<textarea data-t="${name}" data-i="${i}" data-k="${c[0]}">${v}</textarea>`
+                      :`<input ${c[5]?`type="${c[5]}"`:''} data-t="${name}" data-i="${i}" data-k="${c[0]}" value="${v}">`;
+      return `<div class="${wide?'wide':''}"><label>${c[1]} <span class="en">${c[2]}</span></label>${input}</div>`;
+    }).join('');
+    return `<div class="rowcard">${head}<div class="rf">${fields}</div></div>`;
+  }).join('');
+  icons();
 }
 function renderTables(){ Object.keys(TABLES).forEach(renderTable); }
 function addRow(n){ data[n].push({}); renderTable(n); saveDraft(); }
@@ -75,7 +77,9 @@ function fill(o){
   Object.keys(TABLES).forEach(n=>{ data[n]=(o[n]&&o[n].length)? o[n].map(r=>({...r})) : [{}]; });
   renderTables(); saveDraft(); updateMode();
 }
-function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); $('#status').textContent='مسودة محفوظة محلياً'; }catch(e){} }
+function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); $('#status').textContent='مسودة محفوظة محلياً · المعاينة محدّثة'; }catch(e){} schedulePreview(); }
+let _pvT=null;
+function schedulePreview(){ clearTimeout(_pvT); _pvT=setTimeout(renderPreview,180); }
 
 /* ================= Helpers ================= */
 function nextVersion(v){
@@ -176,11 +180,11 @@ function tbl(name,rows){
   return `<table><thead><tr>${cfg.numbered?'<th style="width:28px">#</th>':''}${cfg.cols.map(c=>`<th${c[3]?` style="width:${Math.round(c[3]/9)}%"`:''}>${c[1]}</th>`).join('')}</tr></thead>`+
     rows.map((r,i)=>`<tr>${cfg.numbered?`<td style="text-align:center;font-weight:700">${i+1}</td>`:''}${cfg.cols.map(c=>`<td style="white-space:pre-wrap">${esc(r[c[0]])}</td>`).join('')}</tr>`).join('')+'</table>';
 }
-function printDoc(){
-  const o=collect(), ch=[...o.channels, o.channel_other].filter(Boolean).join('، ');
+function buildDoc(o){
+  const ch=[...o.channels, o.channel_other].filter(Boolean).join('، ');
   const pre=(o.prerequisites||'').split('\n').filter(x=>x.trim());
   const L=n=>window.LOGO_SRC?LOGO_SRC(n):'';
-  $('#printDoc').innerHTML=`<table class="pgwrap"><thead><tr><td><div class="pghead"><img class="s" src="${L('sru')}" alt="SRU"><div class="ref">${esc(o.sop_no)||'SOP'} · الإصدار ${esc(o.version)}<br>${esc(o.title_ar)}</div><img class="i" src="${L('ictd')}" alt="ICTD"></div></td></tr></thead><tbody><tr><td>
+  return `<table class="pgwrap"><thead><tr><td><div class="pghead"><img class="s" src="${L('sru')}" alt="SRU"><div class="ref">${esc(o.sop_no)||'SOP'} · الإصدار ${esc(o.version)}<br>${esc(o.title_ar)}</div><img class="i" src="${L('ictd')}" alt="ICTD"></div></td></tr></thead><tbody><tr><td>
   <h1>${esc(o.title_ar)||'إجراء تشغيلي قياسي'}</h1><div class="sub">${esc(o.title_en)}</div><div class="band"></div>
   <table class="kv"><tr><th>رقم الإجراء</th><td dir="ltr" style="text-align:right">${esc(o.sop_no)||'—'}</td><th>الإصدار</th><td>${esc(o.version)}</td></tr>
   <tr><th>الإدارة / الوحدة</th><td>${esc(o.department)}</td><th>الحالة</th><td>${esc(o.status)}</td></tr>
@@ -203,6 +207,32 @@ function printDoc(){
   <tr><th>التوقيع</th><td></td><td></td><td></td></tr><tr><th>التاريخ</th><td></td><td></td><td>${esc(o.approval_date)}</td></tr></table>
   ${sec('سجل التعديلات','Revision History')}${tbl('revisions',o.revisions)}
   <div class="foot"><span>${esc(o.sop_no)} · الإصدار ${esc(o.version)} · ${esc(o.classification)}</span><span>نموذج SRU-FRM-SOP-01 · إصدار النموذج ${TEMPLATE_VERSION}</span><a href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center"><img src="${L('itoc')}" alt="ITOC" style="height:26px"></a></div></td></tr></tbody></table>`;
+}
+function renderPreview(){
+  const box=$('#printDoc'); if(!box) return;
+  const o=collect(); box.innerHTML=buildDoc(o);
+  const n=$('#pvName'); if(n) n.textContent=(o.sop_no?o.sop_no+' — ':'')+(o.title_ar||'إجراء جديد');
+  fitPreview();
+}
+window.renderPreview=renderPreview;
+function fitPreview(){
+  const sh=$('#sheet'), pane=document.querySelector('.preview'); if(!sh||!pane) return;
+  sh.style.zoom=1;
+  const avail=pane.clientWidth-32, w=sh.offsetWidth;
+  const z=Math.max(.45,Math.min(1,avail/w));
+  sh.style.zoom=z;
+  const zl=$('#pvZoom'); if(zl) zl.textContent=Math.round(z*100)+'%';
+}
+window.addEventListener('resize',()=>{ clearTimeout(window._fitT); window._fitT=setTimeout(fitPreview,120); });
+function showPane(p){
+  document.body.dataset.pane=p;
+  document.querySelectorAll('.paneTabs button').forEach(b=>b.classList.toggle('on',b.dataset.pane===p));
+  if(p==='view') renderPreview();
+  window.scrollTo(0,0);
+}
+function printDoc(){
+  renderPreview();
+  const o=collect();
   const old=document.title; document.title=(o.sop_no||'SOP')+'_v'+(o.version||'')+'_'+(o.title_en||o.title_ar||'').replace(/\s+/g,'-');
   window.print(); setTimeout(()=>document.title=old,500);
 }
@@ -254,7 +284,8 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
 (function init(){
   let d=null; try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)); }catch(e){}
   if(d && d.title_ar) fill(d); else fill(JSON.parse(JSON.stringify(EXAMPLE)));
-  icons(); loadRecords(null, DATA && !DATA.error ? {ok:true, items:DATA.items||[]} : null);
+  document.body.dataset.pane='edit';
+  icons(); renderPreview(); loadRecords(null, DATA && !DATA.error ? {ok:true, items:DATA.items||[]} : null);
 })();
 
-window.__APP_LOADED = '2.3';
+window.__APP_LOADED = '2.4';
