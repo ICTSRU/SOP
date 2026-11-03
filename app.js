@@ -1,4 +1,4 @@
-/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v2.5
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v2.6
    Hosted on GitHub Pages (ictsru/SOP) and loaded by the Apps Script page.
    Contains no data or secrets: every read/save is checked on the server (requireSruUser_). */
 /* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
@@ -9,7 +9,7 @@ window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || 
 function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
 applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '2.5';
+const TEMPLATE_VERSION = '2.6';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -58,7 +58,7 @@ function delRow(n,i){ if(n==='signers'&&data[n][i]&&data[n][i].sig){ toast('لا
 function moveRow(n,i,d){ const j=i+d; if(j<0||j>=data[n].length) return; [data[n][i],data[n][j]]=[data[n][j],data[n][i]]; renderTable(n); saveDraft(); }
 document.addEventListener('input', e=>{
   const t=e.target;
-  if(t.id==='recSel' || t.id==='listFilter' || t.id==='setUrl' || (t.closest && t.closest('dialog'))) return;   // dialogs (signatures, PIN) are not SOP edits
+  if(t.id==='recSel' || t.id==='listFilter' || t.id==='setUrl' || (t.closest && (t.closest('dialog') || t.closest('#sigbar')))) return;   // dialogs (signatures, PIN) are not SOP edits
   dirty=true;
   if(t.dataset.t){ data[t.dataset.t][+t.dataset.i][t.dataset.k]=t.value; }
   saveDraft();
@@ -142,7 +142,7 @@ function renderList(){
 }
 async function loadRecord(id){
   try{ const j=await server('apiGet', id); if(!j.ok) throw new Error(j.error);
-    SIG.final=j.final||null; fill(j.data); dirty=false; loaded={sop_no:j.data.sop_no, version:j.data.version, status:j.data.status, rev:j.rev||null}; updateMode(); applySignLock(); renderPreview();
+    SIG.final=j.final||null; SIG.mode=j.data.sig_mode||null; fill(j.data); dirty=false; loaded={sop_no:j.data.sop_no, version:j.data.version, status:j.data.status, rev:j.rev||null}; updateMode(); applySignLock(); renderPreview();
     $('#recSel').value=id; $('#listModal').classList.remove('open'); window.scrollTo(0,0);
     toast('تم تحميل '+id+' — يمكنك المراجعة والتعديل ثم الحفظ'); }catch(e){ toast('خطأ: '+e.message); $('#recSel').value=loaded?loaded.sop_no:''; }
 }
@@ -318,7 +318,46 @@ async function openSignature(enc, pin){
 const pinOk = p => p.length>=8 && /\d/.test(p) && /[A-Za-z؀-ۿ]/.test(p);
 const fmtDT = d => { const x=new Date(d); return isNaN(x)?'':x.toLocaleString('ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}); };
 
-const SIG = { all:[], mine:[], admin:false, ready:false, final:null, row:-1, busy:false };
+const SIG = { all:[], mine:[], admin:!!(window.DATA&&DATA.admin), ready:false, final:null, row:-1, busy:false,
+              mode:null, defMode:(window.DATA&&DATA.displayDefault)||'image' };
+
+/* ---------- signature display (v2.6 — admin setting, as in the policy platform) ---------- */
+const MODE_TXT={stamp:'نص التوقيع فقط',image:'صورة التوقيع',blur:'صورة مموّهة (واضحة في النسخة النهائية)'};
+const MODE_EN={stamp:'Signature text',image:'Signature image',blur:'Blurred image'};
+function effMode(){ return MODE_TXT[SIG.mode]?SIG.mode:(MODE_TXT[SIG.defMode]?SIG.defMode:'image'); }
+let PDF_CLEAR=null;   // clear pictures used only while rendering the final PDF in 'blur' mode
+/** Irreversible blur: shrink to a few pixels, then scale back up (made in the signer's browser). */
+function makeBlur(url){
+  return new Promise(res=>{ if(!url) return res(''); const im=new Image(); im.onload=()=>{
+    const w=Math.min(420,im.width), h=Math.max(1,Math.round(im.height*w/im.width));
+    const sm=document.createElement('canvas'); sm.width=Math.max(4,Math.round(w/14)); sm.height=Math.max(2,Math.round(h/14));
+    const sx=sm.getContext('2d'); sx.imageSmoothingEnabled=true; sx.drawImage(im,0,0,sm.width,sm.height);
+    const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high'; x.filter='blur(3px)'; x.drawImage(sm,0,0,w,h);
+    res(c.toDataURL('image/png')); }; im.onerror=()=>res(''); im.src=url; });
+}
+function modeCtl(){
+  if(!GAS) return '';
+  const cur=effMode();
+  if(!SIG.admin || SIG.final || !isSaved()) return `<span class="modetag" title="يحددها مسؤول المنصة"><i data-lucide="eye"></i> عرض التوقيع: <b>${esc(MODE_TXT[cur])}</b></span>`;
+  return `<label class="modetag" title="للمسؤول — يمكن تغييرها حتى صدور النسخة النهائية"><i data-lucide="eye"></i> عرض التوقيع:
+    <select id="modeSel" onchange="setSopDisplay(this.value)">${['stamp','image','blur'].map(m=>`<option value="${m}" ${m===cur?'selected':''}>${MODE_TXT[m]}</option>`).join('')}</select></label>`;
+}
+/** Admin: display mode of this SOP version (before the final PDF). */
+async function setSopDisplay(mode){
+  if(!GAS||!SIG.admin) return;
+  if(!isSaved()){ toast('احفظ الإجراء في السجل أولًا'); applySignLock(); return; }
+  try{
+    const blurs={};
+    if(mode==='blur'){ for(const [i,a] of signersList().entries()){ if(a.sig&&a.sig.img&&!a.sig.imgBlur){ const b=await makeBlur(a.sig.img); if(b) blurs[i]=b; } } }
+    const r=await sapi({action:'setDisplay', code:loaded.sop_no, mode, blurs, baseRev:loaded.rev});
+    if(!r.ok) throw new Error(r.error);
+    applyServer(r); toast('طريقة عرض التوقيع: '+MODE_TXT[r.mode]);
+  }catch(e){ toast(e.message,6000); applySignLock(); }
+}
+async function saveDefaultDisplay(){
+  try{ const m=$('#msDefMode').value; const r=await sapi({action:'setDefaultDisplay', mode:m}); if(!r.ok) throw new Error(r.error);
+    SIG.defMode=r.mode; toast('الإعداد الافتراضي لعرض التوقيع: '+MODE_TXT[r.mode]); applySignLock(); renderPreview(); }catch(e){ toast(e.message); }
+}
 const nonEmpty = r => r && (String(r.role||'').trim() || String(r.name||'').trim() || String(r.email||'').trim() || r.sig);
 function signersList(){ return (data.signers||[]).filter(nonEmpty); }
 function signState(){ const a=signersList(); const n=a.filter(x=>x.sig).length; return {n, total:a.length, all:a.length>0&&n===a.length}; }
@@ -332,12 +371,17 @@ function approvalHtml(o){
   return '<div class="sign">'+list.map((a,i)=>{
     const s=a.sig;
     if(s){
-      const pic = s.img ? `<div class="sigimg"><img src="${esc(s.img)}" alt="توقيع ${esc(s.signerName)}" draggable="false"></div>` : '';
+      const mode=effMode(), clear=PDF_CLEAR&&PDF_CLEAR[i];
+      const pic = mode==='stamp' ? `<div class="sigtxt" title="نص التوقيع">${esc(s.signerName)}</div>` :
+        clear ? `<div class="sigimg"><img src="${esc(clear)}" alt="توقيع ${esc(s.signerName)}"></div>` :
+        mode==='image'&&s.img ? `<div class="sigimg"><img src="${esc(s.img)}" alt="توقيع ${esc(s.signerName)}" draggable="false"></div>` :
+        mode==='blur'&&s.imgBlur ? `<div class="sigimg blurred" title="صورة مموّهة — تظهر واضحة في النسخة النهائية الموقّعة"><img src="${esc(s.imgBlur)}" alt="توقيع مموّه" draggable="false"></div>` : '';
+      const need = mode!=='stamp' && !pic;
       const mine = GAS && ME===String(s.by||'').toLowerCase() && !SIG.final;
       return `<div class="signed"><b>${esc(a.role)}</b>${esc(a.name)}
       ${pic}
       <div class="stamp"><span class="ok">✔ موقّع إلكترونيًا</span><span class="nm">${esc(s.signerName)}</span>${s.position?`<span class="ps">${esc(s.position)}</span>`:''}<span class="dt">${esc(fmtDT(s.at))}</span><span class="hx" dir="ltr">SHA-256 · ${esc(String(s.docHash||'').slice(0,16))}</span></div>
-      ${mine ? `${!pic?`<button class="btn sm primary no-print" onclick="showSigImg(${i})"><i data-lucide="image"></i>إظهار صورة توقيعي</button>`:''}<button class="btn sm no-print" onclick="unsignRow(${i})"><i data-lucide="undo-2"></i>إزالة توقيعي</button>`:''}</div>`;
+      ${mine ? `${need?`<button class="btn sm primary no-print" onclick="showSigImg(${i})"><i data-lucide="image"></i>إظهار صورة توقيعي</button>`:''}<button class="btn sm no-print" onclick="unsignRow(${i})"><i data-lucide="undo-2"></i>إزالة توقيعي</button>`:''}</div>`;
     }
     const email=String(a.email||'').trim().toLowerCase();
     const act = !GAS || SIG.final ? '' :
@@ -374,6 +418,7 @@ function applySignLock(){
   else if(st.n) h=`<span><i data-lucide="lock"></i> <b>مقفل للتعديل</b> — يحتوي على ${st.n} من ${st.total} توقيعات. للتعديل: يزيل كل موقّع توقيعه برقمه السري، أو أنشئ إصدارًا جديدًا.</span>
       <span class="tb"><button class="btn sm" onclick="newVersion()"><i data-lucide="git-branch-plus"></i>إصدار جديد للتعديل</button></span>`;
   else h=`<span><i data-lucide="pen-line"></i> التوقيع الإلكتروني: 0 من ${st.total}. ${isSaved()?'':'احفظ الإجراء في السجل أولًا. '}حدّد بريد كل موقّع في قسم «ضبط الوثيقة والاعتماد».</span>`;
+  h+=modeCtl();
   bar.innerHTML=h; bar.hidden=false; bar.className='sigbar no-print'+(SIG.final?' final':st.all?' all':'');
   icons();
 }
@@ -381,7 +426,7 @@ function applySignLock(){
 /* ---------- my signatures ---------- */
 async function loadMySigs(){
   if(!GAS) return;
-  try{ const r=await sapi({action:'sigs'}); SIG.mine=r.items||[]; SIG.all=r.all||[]; SIG.admin=!!r.admin; SIG.ready=!!r.ready; }catch(e){ toast(e.message); }
+  try{ const r=await sapi({action:'sigs'}); SIG.mine=r.items||[]; SIG.all=r.all||[]; SIG.admin=!!r.admin; SIG.ready=!!r.ready; if(r.displayDefault) SIG.defMode=r.displayDefault; }catch(e){ toast(e.message); }
   renderMySigs();
 }
 function renderMySigs(){
@@ -393,7 +438,7 @@ function renderMySigs(){
       <td style="white-space:nowrap"><button class="btn sm" onclick="previewSig('${s.id}')" title="معاينة"><i data-lucide="eye"></i></button>
       <button class="btn sm" onclick="changeSigPin('${s.id}')" title="تغيير الرقم السري"><i data-lucide="key-round"></i></button>
       <button class="btn sm danger" onclick="deleteSig('${s.id}')" title="حذف"><i data-lucide="trash-2"></i></button></td></tr>`).join('');
-  $('#msAllWrap').hidden=!SIG.admin;
+  $('#msAllWrap').hidden=!SIG.admin; $('#msDefWrap').hidden=!SIG.admin; $('#msDefMode').value=SIG.defMode;
   if(SIG.admin) $('#msAll').innerHTML = !(SIG.all||[]).length ? '<tr><td colspan="6" class="hint">لا توجد توقيعات مسجّلة.</td></tr>' :
     SIG.all.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.position||'')}</td><td dir="ltr">${esc(s.ownerEmail)}</td>
       <td>${s.locked?'<span class="chip lk">مقفل مؤقتًا</span>':'<span class="chip">مشفّر 🔒</span>'}</td><td class="hint">${esc(fmtDT(s.createdAt))}</td>
@@ -499,7 +544,7 @@ function askPin({title, sub, change=false, verify}){
 
 /* ---------- sign / unsign ---------- */
 function applyServer(r){
-  const d=r.data;
+  const d=r.data; SIG.mode=d.sig_mode||null;
   fill(d); dirty=false;
   loaded={sop_no:d.sop_no, version:d.version, status:d.status, rev:r.rev||null};
   updateMode(); applySignLock(); renderPreview(); icons();
@@ -526,7 +571,8 @@ async function signGo(){
   try{
     const img=await sigImageFor(id, pin);        // wrong PIN stops here (counted by the server)
     m.textContent='جارٍ التوقيع…';
-    const r=await sapi({action:'sign', code:loaded.sop_no, row:i, signerId:id, img, tag:await authTag(pin,s.authSalt,s.iter), baseRev:loaded.rev});
+    const blur=await makeBlur(img);
+    const r=await sapi({action:'sign', code:loaded.sop_no, row:i, signerId:id, img, blur, tag:await authTag(pin,s.authSalt,s.iter), baseRev:loaded.rev});
     if(!r.ok){ m.textContent=r.msg||r.error||'تعذّر التوقيع'; if(r.locked) loadMySigs(); return; }
     dlgSign.close(); applyServer(r); toast('تم التوقيع ✔ — '+(r.allSigned?'اكتملت جميع التوقيعات':'سُجّل توقيعك'));
     if(r.allSigned) finalizeFlow(true);
@@ -550,9 +596,9 @@ async function showSigImg(i){
   await loadMySigs();
   const s=SIG.mine.find(x=>x.id===a.sig.signerId);
   if(!s){ toast('التوقيع المستخدم لم يعد موجودًا في سجلك'); return; }
-  const r=await askPin({title:'إظهار صورة توقيعك في الإجراء', sub:a.role+' — '+s.name, verify:async pin=>{
-    const img=await sigImageFor(s.id, pin);
-    const x=await sapi({action:'sigShow', code:loaded.sop_no, row:i, img, tag:await authTag(pin,s.authSalt,s.iter), baseRev:loaded.rev});
+  const r=await askPin({title:'إظهار صورة توقيعك في الإجراء', sub:a.role+' — '+s.name+' · تظهر حسب طريقة العرض: '+MODE_TXT[effMode()], verify:async pin=>{
+    const img=await sigImageFor(s.id, pin), blur=await makeBlur(img);
+    const x=await sapi({action:'sigShow', code:loaded.sop_no, row:i, img, blur, tag:await authTag(pin,s.authSalt,s.iter), baseRev:loaded.rev});
     if(!x.ok) throw new Error(x.msg||x.error); return x; }});
   if(r){ applyServer(r); toast('أُضيفت صورة توقيعك إلى خانة «'+a.role+'» ✔'); }
 }
@@ -699,7 +745,8 @@ async function finalizeFlow(auto){
     await loadQrLib();
     const vt=await sapi({action:'vtoken', code:loaded.sop_no});
     if(!vt.ok) throw new Error(vt.error);
-    const pdf=await generatePdfB64(false, vt);
+    if(effMode()==='blur'){ const fi=await sapi({action:'finalImages', code:loaded.sop_no}); if(!fi.ok) throw new Error(fi.error); PDF_CLEAR=fi.images||{}; }
+    let pdf; try{ pdf=await generatePdfB64(false, vt); } finally { PDF_CLEAR=null; renderPreview(); }
     const r=await sapi({action:'finalize', code:loaded.sop_no, pdf});
     if(!r.ok) throw new Error(r.error);
     SIG.final={at:r.at, pdfHash:r.pdfHash, docHash:r.docHash, verifyId:r.verifyId||vt.id};
@@ -753,6 +800,12 @@ dialog::backdrop{background:rgba(36,20,54,.45)}
 .pd .sign .signed{border-color:#1d7a46;background:#f3fbf6}
 .pd .sign .sigimg{height:62px;display:flex;align-items:center;justify-content:center;margin:4px 0 2px}
 .pd .sign .sigimg img{max-height:60px;max-width:100%;object-fit:contain}
+.pd .sign .sigimg.blurred img{opacity:.85}
+.pd .sign .sigtxt{height:62px;display:flex;align-items:center;justify-content:center;margin:4px 0 2px;font-size:19px;font-weight:700;font-style:italic;color:#1b2f6b;border-bottom:1px dotted #9fb0d8;line-height:1.2;word-break:break-word}
+.modetag{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:2px 10px}
+.modetag select{font:inherit;font-size:12px;padding:2px 4px;border:1px solid #cbbfe0;border-radius:6px;background:#fff}
+.defbox{border:1px solid #cbbfe0;background:#faf7fe;border-radius:var(--radius);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+.defbox .tbx{display:flex;gap:6px;flex-wrap:wrap}.defbox select{padding:5px;border:1px solid #cbbfe0;border-radius:6px}
 .pd .sign .stamp{margin-top:auto;border:2px solid #1d7a46;color:#1d7a46;border-radius:6px;padding:4px 6px;display:flex;flex-direction:column;gap:1px;font-size:10.5px;line-height:1.45}
 .pd .sign .stamp .ok{font-weight:800}.pd .sign .stamp .nm{color:#241436;font-weight:700;font-size:11.5px}.pd .sign .stamp .ps,.pd .sign .stamp .dt{color:#3d6b50}
 .pd .sign .stamp .hx{font-family:monospace;font-size:9px;color:#4b7a5e}
@@ -788,6 +841,10 @@ body.sig-locked .editor .card::before{content:"🔒 مقفل للتعديل — 
     <div class="hint">سجل التوقيعات <b>خاص بمنصة الإجراءات التشغيلية فقط</b> ومستقل عن أي منصة أخرى (منها منصة السياسات). تُشفَّر الصورة داخل متصفحك (AES-256-GCM)، ولا يصل الرقم السري ولا الصورة إلى الخادم.</div>
     <div class="hint"><a href="#" onclick="openHowTo();return false">▶ كيفية التوقيع — شرح توضيحي</a>: إضافة التوقيع، والتوقيع على الإجراء، وكيف يُحمى توقيعك.</div>
     <div style="overflow-x:auto"><table class="reg"><thead><tr><th>الاسم</th><th>المسمى</th><th>الحالة</th><th>تاريخ الإضافة</th><th></th></tr></thead><tbody id="msBody"><tr><td colspan="5" class="hint">…</td></tr></tbody></table></div>
+    <div id="msDefWrap" hidden class="defbox"><b>طريقة عرض التوقيع الافتراضية للمنصة <span class="en">Default signature display</span></b>
+      <span class="hint">(للمسؤول — تُطبَّق على الإجراءات التي ليس لها إعداد خاص، وتُثبَّت في كل إجراء عند أول توقيع)</span>
+      <div class="tbx"><select id="msDefMode"><option value="stamp">نص التوقيع فقط</option><option value="image">صورة التوقيع</option><option value="blur">صورة مموّهة (واضحة في النسخة النهائية)</option></select>
+      <button class="btn primary" onclick="saveDefaultDisplay()"><i data-lucide="check"></i>حفظ</button></div></div>
     <div id="msAllWrap" hidden>
       <h4 style="margin:6px 0 0;color:var(--purple-dark)">سجل التوقيعات — جميع الموقّعين <span class="hint">(للمسؤول)</span></h4>
       <div style="overflow-x:auto"><table class="reg"><thead><tr><th>الاسم</th><th>المسمى</th><th>البريد</th><th>الحالة</th><th>تاريخ الإضافة</th><th></th></tr></thead><tbody id="msAll"></tbody></table></div>
@@ -851,4 +908,4 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
   const dl=DATA&&DATA.params&&DATA.params.code; if(dl) loadRecord(dl);
 })();
 
-window.__APP_LOADED = '2.5';
+window.__APP_LOADED = '2.6';
