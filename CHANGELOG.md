@@ -1,5 +1,11 @@
 # CHANGELOG — SRU SOP Template (SRU-FRM-SOP-01)
 
+## 3.2 — 2026-11-03
+### Changed
+- The status line under the header («مسودة محفوظة محليًا · المعاينة محدّثة») is removed; save results appear as notifications.
+- The signing bar appears only once the SOP has signatures (lock, final copy, new version); the «التوقيع الإلكتروني: 0 من N…» line is removed.
+- «عرض التوقيع (للمنصة)» moved up into the purple header next to the form version (admins: selector · others: text).
+
 ## 3.1 — 2026-11-03
 ### Added
 - **Automatic Apps Script update from GitHub**: `.github/workflows/deploy-apps-script.yml` (clasp 2.4.2) pushes `apps-script/` to the project and moves the existing web-app deployment to a new version on every change — same /exec URL. Guide: `AUTODEPLOY.md`.

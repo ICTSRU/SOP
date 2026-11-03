@@ -1,4 +1,4 @@
-/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v3.1
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v3.2
    Hosted on GitHub Pages (ictsru/SOP) and loaded by the Apps Script page.
    Contains no data or secrets: every read/save is checked on the server (requireSruUser_). */
 /* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
@@ -9,7 +9,7 @@ window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || 
 function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
 applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '3.1';
+const TEMPLATE_VERSION = '3.2';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -58,7 +58,7 @@ function delRow(n,i){ if(n==='signers'&&data[n][i]&&data[n][i].sig){ toast('لا
 function moveRow(n,i,d){ const j=i+d; if(j<0||j>=data[n].length) return; [data[n][i],data[n][j]]=[data[n][j],data[n][i]]; renderTable(n); saveDraft(); }
 document.addEventListener('input', e=>{
   const t=e.target;
-  if(t.id==='recSel' || t.id==='listFilter' || t.id==='setUrl' || (t.closest && (t.closest('dialog') || t.closest('#sigbar')))) return;   // dialogs (signatures, PIN) are not SOP edits
+  if(t.id==='recSel' || t.id==='listFilter' || t.id==='setUrl' || (t.closest && (t.closest('dialog') || t.closest('#sigbar') || t.closest('#modeBox')))) return;   // dialogs (signatures, PIN) are not SOP edits
   dirty=true;
   if(t.dataset.t){ data[t.dataset.t][+t.dataset.i][t.dataset.k]=t.value; }
   saveDraft();
@@ -338,6 +338,7 @@ function makeBlur(url){
     const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high'; x.filter='blur(3px)'; x.drawImage(sm,0,0,w,h);
     res(c.toDataURL('image/png')); }; im.onerror=()=>res(''); im.src=url; });
 }
+function renderModeBox(){ const b=document.getElementById('modeBox'); if(b){ b.innerHTML=modeCtl(); icons(); } }
 function modeCtl(){
   if(!GAS) return '';
   const cur=effMode();
@@ -411,7 +412,8 @@ function applySignLock(){
   document.body.classList.toggle('sig-locked', locked);
   lockInputs(locked);
   const bar=$('#sigbar'); if(!bar) return;
-  if(!GAS || (!locked && !st.total)){ bar.hidden=true; return; }
+  renderModeBox();
+  if(!GAS || !locked){ bar.hidden=true; return; }   // v3.2: shown only once there are signatures
   let h='';
   if(SIG.final) h=`<span><i data-lucide="lock"></i> <b>نسخة نهائية موقّعة</b> — صدرت ${esc(fmtDT(SIG.final.at))}. لا يمكن تعديل هذا الإصدار أو إزالة توقيعاته.</span>
       ${SIG.final.verifyId?`<span>رمز التحقق: <b dir="ltr" class="mono">${esc(SIG.final.verifyId)}</b></span>`:''}
@@ -422,8 +424,6 @@ function applySignLock(){
       <span class="tb"><button class="btn sm primary" onclick="finalizeFlow(false)" ${SIG.busy?'disabled':''}><i data-lucide="file-check-2"></i>${SIG.busy?'جارٍ الإصدار…':'إصدار النسخة النهائية'}</button></span>`;
   else if(st.n) h=`<span><i data-lucide="lock"></i> <b>مقفل للتعديل</b> — يحتوي على ${st.n} من ${st.total} توقيعات. للتعديل: يزيل كل موقّع توقيعه برقمه السري، أو أنشئ إصدارًا جديدًا.</span>
       <span class="tb"><button class="btn sm" onclick="newVersion()"><i data-lucide="git-branch-plus"></i>إصدار جديد للتعديل</button></span>`;
-  else h=`<span><i data-lucide="pen-line"></i> التوقيع الإلكتروني: 0 من ${st.total}. ${isSaved()?'':'احفظ الإجراء في السجل أولًا. '}حدّد بريد كل موقّع في قسم «ضبط الوثيقة والاعتماد».</span>`;
-  h+=modeCtl();
   bar.innerHTML=h; bar.hidden=false; bar.className='sigbar no-print'+(SIG.final?' final':st.all?' all':'');
   icons();
 }
@@ -809,6 +809,8 @@ dialog::backdrop{background:rgba(36,20,54,.45)}
 .pd .sign .sigimg.blurred img{opacity:.85}
 .pd .sign .sigtxt{height:62px;display:flex;align-items:center;justify-content:center;margin:4px 0 2px;font-size:19px;font-weight:700;font-style:italic;color:#1b2f6b;border-bottom:1px dotted #9fb0d8;line-height:1.2;word-break:break-word}
 .modetag{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-size:12px;font-weight:600;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:2px 10px}
+.band-head .modetag{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff}
+.band-head .modetag b{color:#fff}.band-head .modetag svg{width:15px;height:15px}
 .modetag select{font:inherit;font-size:12px;width:auto!important;min-width:0;max-width:260px;padding:2px 4px;border:1px solid #cbbfe0;border-radius:6px;background:#fff}
 .defbox{border:1px solid #cbbfe0;background:#faf7fe;border-radius:var(--radius);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
 .defbox .tbx{display:flex;gap:6px;flex-wrap:wrap}.defbox select{padding:5px;border:1px solid #cbbfe0;border-radius:6px}
@@ -915,4 +917,4 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
   else if(DATA&&DATA.params&&DATA.params.fresh && IS_ADMIN) newSop(true);   // v2.7: «＋ إجراء جديد» from the status board
 })();
 
-window.__APP_LOADED = '3.1';
+window.__APP_LOADED = '3.2';

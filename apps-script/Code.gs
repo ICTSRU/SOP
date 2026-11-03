@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- *  SRU SOP Register (SRU-FRM-SOP-01) v3.1 — built on SRU Secure Access Kit v1.4
+ *  SRU SOP Register (SRU-FRM-SOP-01) v3.2 — built on SRU Secure Access Kit v1.4
  *  Access: Sulaiman Al Rajhi University Google accounts (@sr.edu.sa) only
  *  ICTD — ITOC
  * ---------------------------------------------------------------------
@@ -16,7 +16,7 @@
 /* ▼▼▼ CONFIG — change per platform ▼▼▼ */
 const APP_NAME       = 'نموذج إجراء تشغيلي قياسي';   // Arabic title shown in the page
 const APP_NAME_EN    = 'SRU SOP Register';     // English name
-const APP_VERSION    = '3.1';
+const APP_VERSION    = '3.2';
 const ALLOWED_DOMAIN = 'sr.edu.sa';
 const FAVICON_URL    = 'https://ictsru.github.io/ITOC/assets/itoc-logo.png';
 const APP_JS_URL     = 'https://ictsru.github.io/SOP/app.js';   // page logic, uploaded to the GitHub repo ictsru/SOP

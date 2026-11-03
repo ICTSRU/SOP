@@ -225,7 +225,8 @@ input[readonly]{background:var(--purple-light)}
 <header class="band-head sru-tech-bg"><div class="row">
   <div class="title">
     <h1>نموذج إجراء تشغيلي قياسي <span class="en">Standard Operating Procedure (SOP) Template</span></h1>
-    <span class="verchip">إصدار النموذج <b id="tplVer">3.1</b> · SRU-FRM-SOP-01</span>
+    <span class="verchip">إصدار النموذج <b id="tplVer">3.2</b> · SRU-FRM-SOP-01</span>
+    <span id="modeBox" class="no-print"></span>
   </div>
   <div class="toolbar no-print">
     <button class="btn primary" onclick="saveToSheet()"><i data-lucide="cloud-upload"></i>حفظ في Google Sheets</button>
@@ -245,7 +246,7 @@ input[readonly]{background:var(--purple-light)}
   </div>
 </div></header>
 <div class="diag"></div>
-<div class="notice no-print"><div class="row"><i data-lucide="info"></i><span id="status">عدّل البيانات في اللوحة اليمنى، وتظهر الوثيقة مباشرة في المعاينة على اليسار.</span></div></div>
+<div class="notice no-print" hidden style="display:none"><div class="row"><i data-lucide="info"></i><span id="status">عدّل البيانات في اللوحة اليمنى، وتظهر الوثيقة مباشرة في المعاينة على اليسار.</span></div></div>
 <div id="sigbar" class="sigbar no-print" hidden></div>
 <div class="paneTabs no-print">
   <button class="btn sm on" data-pane="edit" onclick="showPane('edit')"><i data-lucide="pencil"></i>تحرير</button>
@@ -380,7 +381,7 @@ input[readonly]{background:var(--purple-light)}
 </div>
 
 <footer class="sitefoot sru-tech-bg-dark no-print"><div class="row">
-  <span>مركز العمليات التقنية <b dir="ltr">ITOC</b> — الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي © 2026 · SRU-FRM-SOP-01 · الإصدار <span class="ver tplVer2">v3.1</span></span>
+  <span>مركز العمليات التقنية <b dir="ltr">ITOC</b> — الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي © 2026 · SRU-FRM-SOP-01 · الإصدار <span class="ver tplVer2">v3.2</span></span>
   <a class="itoc-link" href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center"><img data-logo="itoc" alt="ITOC — IT Operations Center"></a>
 </div></footer>
 
