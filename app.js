@@ -1,4 +1,4 @@
-/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v2.6
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v2.7
    Hosted on GitHub Pages (ictsru/SOP) and loaded by the Apps Script page.
    Contains no data or secrets: every read/save is checked on the server (requireSruUser_). */
 /* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
@@ -9,7 +9,7 @@ window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || 
 function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
 applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '2.6';
+const TEMPLATE_VERSION = '2.7';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -243,7 +243,7 @@ function printDoc(){
 }
 
 /* ================= New / Example ================= */
-function newSop(){ if(!confirm('بدء إجراء جديد؟ سيتم مسح النموذج الحالي.')) return;
+function newSop(force){ if(!force && !confirm('بدء إجراء جديد؟ سيتم مسح النموذج الحالي.')) return;
   fill({unit_code:'ICTD',status:'مسودة',classification:'داخلي',version:'1.0',department:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',review_cycle:'12',target_unit:'ساعة عمل',priority:'متوسطة',
         signers:[{role:'إعداد',name:'',email:(window.DATA&&DATA.user)||''},{role:'مراجعة',name:'',email:''},{role:'اعتماد',name:'',email:''}],
         revisions:[{version:'1.0',date:new Date().toISOString().slice(0,10),change:'الإصدار الأول',by:''}]}); SIG.final=null; dirty=false; loaded=null; applySignLock(); $('#recSel').value=''; window.scrollTo(0,0); }
@@ -768,6 +768,7 @@ async function previewPdf(){
   try{ const o=collect(); saveB64(await generatePdfB64(true), (o.sop_no||'SOP')+'_v'+(o.version||'')+'-preview.pdf'); }catch(e){ toast(e.message); }
 }
 function openHowTo(){ if(BASE_URL) window.open(BASE_URL+'?page=howto','_blank','noopener'); else toast('متاح من داخل المنصة'); }
+function openBoard(){ if(BASE_URL) window.open(BASE_URL+'?page=board','_top'); else toast('متاح من داخل المنصة'); }
 function openVerify(id){ if(BASE_URL) window.open(BASE_URL+(id?'?verify='+encodeURIComponent(id):'?page=verify'),'_blank','noopener'); else toast('متاح من داخل المنصة'); }
 
 /* ---------- dialogs + styles (injected once, so only app.js changes for future fixes) ---------- */
@@ -906,6 +907,7 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
   document.body.dataset.pane='edit';
   applySignLock(); icons(); renderPreview(); loadRecords(null, DATA && !DATA.error ? {ok:true, items:DATA.items||[]} : null);
   const dl=DATA&&DATA.params&&DATA.params.code; if(dl) loadRecord(dl);
+  else if(DATA&&DATA.params&&DATA.params.fresh) newSop(true);   // v2.7: «＋ إجراء جديد» from the status board
 })();
 
-window.__APP_LOADED = '2.6';
+window.__APP_LOADED = '2.7';
