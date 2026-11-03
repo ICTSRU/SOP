@@ -802,8 +802,8 @@ dialog::backdrop{background:rgba(36,20,54,.45)}
 .pd .sign .sigimg img{max-height:60px;max-width:100%;object-fit:contain}
 .pd .sign .sigimg.blurred img{opacity:.85}
 .pd .sign .sigtxt{height:62px;display:flex;align-items:center;justify-content:center;margin:4px 0 2px;font-size:19px;font-weight:700;font-style:italic;color:#1b2f6b;border-bottom:1px dotted #9fb0d8;line-height:1.2;word-break:break-word}
-.modetag{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:2px 10px}
-.modetag select{font:inherit;font-size:12px;padding:2px 4px;border:1px solid #cbbfe0;border-radius:6px;background:#fff}
+.modetag{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-size:12px;font-weight:600;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:2px 10px}
+.modetag select{font:inherit;font-size:12px;width:auto!important;min-width:0;max-width:260px;padding:2px 4px;border:1px solid #cbbfe0;border-radius:6px;background:#fff}
 .defbox{border:1px solid #cbbfe0;background:#faf7fe;border-radius:var(--radius);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
 .defbox .tbx{display:flex;gap:6px;flex-wrap:wrap}.defbox select{padding:5px;border:1px solid #cbbfe0;border-radius:6px}
 .pd .sign .stamp{margin-top:auto;border:2px solid #1d7a46;color:#1d7a46;border-radius:6px;padding:4px 6px;display:flex;flex-direction:column;gap:1px;font-size:10.5px;line-height:1.45}
