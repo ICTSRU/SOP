@@ -1,4 +1,4 @@
-# SRU SOP Register — automatic Apps Script update · autodeploy v1.1
+# SRU SOP Register — automatic Apps Script update · autodeploy v1.2
 # Every push that changes apps-script/** (or a manual "Run workflow") pushes the files to the Apps Script
 # project and moves the EXISTING web-app deployment to a new version — the /exec URL stays the same.
 # Secrets (Settings ▸ Secrets and variables ▸ Actions): CLASPRC_JSON · SCRIPT_ID · DEPLOYMENT_ID
@@ -16,8 +16,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
-      DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+      SCRIPT_ID: ${{ secrets.SCRIPT_ID || vars.SCRIPT_ID }}
+      DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID || vars.DEPLOYMENT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +36,7 @@ jobs:
           [ -n "$CLASPRC_JSON" ]  || miss="$miss CLASPRC_JSON"
           [ -n "$SCRIPT_ID" ]     || miss="$miss SCRIPT_ID"
           [ -n "$DEPLOYMENT_ID" ] || miss="$miss DEPLOYMENT_ID"
-          if [ -n "$miss" ]; then echo "::error::Missing repository secret(s):$miss — add them in Settings > Secrets and variables > Actions > Repository secrets"; exit 1; fi
+          if [ -n "$miss" ]; then echo "::error::Missing repository secret(s):$miss — add them in Settings > Secrets and variables > Actions (Secrets or Variables tab; exact names)"; exit 1; fi
           echo "$CLASPRC_JSON" | grep -q '"refresh_token"' || { echo "::error::CLASPRC_JSON does not contain refresh_token — paste the whole content of .clasprc.json"; exit 1; }
           printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
 
