@@ -1,4 +1,4 @@
-/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v3.0
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v3.1
    Hosted on GitHub Pages (ictsru/SOP) and loaded by the Apps Script page.
    Contains no data or secrets: every read/save is checked on the server (requireSruUser_). */
 /* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
@@ -9,7 +9,7 @@ window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || 
 function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
 applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '3.0';
+const TEMPLATE_VERSION = '3.1';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -915,4 +915,4 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
   else if(DATA&&DATA.params&&DATA.params.fresh && IS_ADMIN) newSop(true);   // v2.7: «＋ إجراء جديد» from the status board
 })();
 
-window.__APP_LOADED = '3.0';
+window.__APP_LOADED = '3.1';

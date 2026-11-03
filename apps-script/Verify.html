@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>التحقق من إجراء موقّع | SRU SOP Register v3.1</title>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--purple:#501e8c;--purple-dark:#3a1464;--purple-light:#f0ebf8;--blue:#0a6eaa;--bg:#f7f5fb;--border:rgba(80,30,140,.14);--ink:#241436;--muted:#6b5a80;--ok:#1d7a46;--ok-bg:#eef8f1;--bad:#b42318;--bad-bg:#fdecea;--warn:#b54708;--warn-bg:#fff4e5;--radius:6px}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Cairo',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7}
+.topbar{background:var(--purple-dark);color:#fff;padding:6px 20px;font-size:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.who{direction:ltr;background:rgba(255,255,255,.12);border-radius:3px;padding:0 8px;color:#e6dcf5}
+.navbar{background:linear-gradient(110deg,#501e8c,#4a1f8a 55%,#2b3f9e);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.navbar h1{font-size:19px;margin:0;font-weight:800}
+.navbar a{color:#fff;border:1px solid rgba(255,255,255,.7);border-radius:var(--radius);padding:5px 12px;text-decoration:none;font-weight:600;font-size:13px}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+.ways{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.ways{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card h2{margin:0 0 4px;font-size:16px;color:var(--purple-dark)}
+.card p{margin:0 0 10px;color:var(--muted);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:180px;font-family:monospace;font-size:18px;letter-spacing:1px;direction:ltr;text-align:center;border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--ink);text-transform:uppercase}
+input[type=text]:focus{outline:2px solid var(--purple);border-color:var(--purple)}
+.btn{font-family:inherit;font-size:14px;font-weight:700;border:1px solid var(--purple);background:var(--purple);color:#fff;border-radius:var(--radius);padding:8px 16px;cursor:pointer}
+.btn:focus-visible{outline:3px solid #8fd3ff;outline-offset:2px}
+.drop{border:2px dashed rgba(80,30,140,.3);border-radius:10px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;transition:background .2s,border-color .2s}
+.drop.over{background:var(--purple-light);border-color:var(--purple)}
+.drop b{color:var(--purple)}
+.fp{font-family:monospace;font-size:11.5px;direction:ltr;word-break:break-all;color:var(--muted);margin-top:6px}
+#result:empty{display:none}
+.verdict{border-radius:10px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;border:1.5px solid}
+.verdict .ic{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:24px;font-weight:800}
+.verdict h3{margin:0;font-size:19px}
+.verdict p{margin:2px 0 0}
+.v-ok{background:var(--ok-bg);border-color:var(--ok)}.v-ok .ic{background:var(--ok)}.v-ok h3{color:var(--ok)}
+.v-bad{background:var(--bad-bg);border-color:var(--bad)}.v-bad .ic{background:var(--bad)}.v-bad h3{color:var(--bad)}
+.v-warn{background:var(--warn-bg);border-color:var(--warn)}.v-warn .ic{background:var(--warn)}.v-warn h3{color:var(--warn)}
+@keyframes howtoGlow{0%,100%{box-shadow:0 0 0 0 rgba(143,211,255,.0),0 0 6px 1px rgba(255,255,255,.35)}50%{box-shadow:0 0 0 4px rgba(143,211,255,.35),0 0 18px 6px rgba(143,211,255,.75)}}
+.glow{animation:howtoGlow 2.2s ease-in-out infinite;border-color:#8fd3ff!important}
+.glow:hover{animation-play-state:paused}
+@media (prefers-reduced-motion: reduce){.glow{animation:none;box-shadow:0 0 0 3px rgba(143,211,255,.6)}}
+.note{border-radius:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);font-weight:600;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--purple);color:#fff;text-align:right;padding:6px 8px;font-weight:700}
+td{border-bottom:1px solid var(--border);padding:6px 8px;vertical-align:top}
+.kv td:first-child{width:30%;color:var(--muted);font-weight:600}
+.mono{font-family:monospace;direction:ltr;word-break:break-all;font-size:12px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.scroll{overflow-x:auto}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts a,.acts button{font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--purple);background:#fff;color:var(--purple);border-radius:var(--radius);padding:6px 12px;cursor:pointer;text-decoration:none}
+.how{font-size:12.5px;color:var(--muted)}
+.how li{margin-bottom:3px}
+.sitefoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 20px;background:#fff;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+.sitefoot img{height:36px}
+.brandbar{background:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border)}
+.brandbar img{height:40px}
+.acct{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:3px 4px 3px 12px;margin:2px 0;color:#fff;font-family:inherit;line-height:1.25}
+.acct .av{width:30px;height:30px;border-radius:50%;background:#fff;color:#3a1464;font-weight:800;font-size:14px;display:grid;place-items:center;flex:0 0 auto}
+.acct .nm{display:flex;flex-direction:column;min-width:0;text-align:right}
+.acct .nm b{font-size:12.5px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.acct .nm small{direction:ltr;font-size:11px;color:#d9cdee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;text-align:right}
+.acct .sw{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.75);border-radius:999px;padding:3px 12px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap}
+.acct .sw:hover{background:rgba(255,255,255,.14)}.acct .sw:focus-visible,.acct .lo:focus-visible{outline:2px solid #8fd3ff;outline-offset:2px}
+.acct .sw svg{width:14px;height:14px}
+.acct .lo{color:#d9cdee;font-size:11px;text-decoration:underline;padding:0 6px 0 2px;white-space:nowrap}
+@media (max-width:640px){.acct .nm small{display:none}.acct .lo{display:none}}
+@media print{.acct{display:none!important}}
+.topbar{align-items:center}
+</style>
+</head>
+<body>
+<div class="topbar"><span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات</span><span id="acct"></span></div>
+<div class="navbar"><h1>التحقق من إجراء موقّع <span style="font-weight:400;font-size:13px;opacity:.85">SOP verification</span></h1>
+  <span class="row"><a class="glow" data-page="howto" href="howto.html" target="_blank" rel="noopener">كيفية التوقيع</a><a data-page="editor" href="index.html">الصفحة الرئيسية</a></span></div>
+
+<main>
+  <div class="ways">
+    <section class="card">
+      <h2>برمز التحقق أو رمز QR</h2>
+      <p>امسح رمز QR في صفحة «شهادة التوقيع الإلكتروني» فيفتح هذه الصفحة بالنتيجة مباشرة، أو اكتب رمز التحقق المطبوع تحته.</p>
+      <form class="row" id="fCode"><input type="text" id="code" placeholder="XXXX-XXXX-XXXX" maxlength="14" autocomplete="off" aria-label="رمز التحقق"><button class="btn" type="submit">تحقق</button></form>
+    </section>
+    <section class="card">
+      <h2>برفع ملف PDF الموقّع</h2>
+      <p>تُحسب بصمة الملف (SHA-256) داخل متصفحك وتُطابق مع النسخة الأرشيفية. <b>لا يُرفع الملف إلى الخادم.</b></p>
+      <label class="drop" id="drop" for="file"><b>اختر ملف PDF</b> أو اسحبه وأفلته هنا<input type="file" id="file" accept="application/pdf,.pdf" hidden></label>
+      <div class="fp" id="fp"></div>
+    </section>
+  </div>
+
+  <div id="result" aria-live="polite"></div>
+
+  <section class="card how">
+    <h2 style="font-size:14px">ماذا يعني التحقق؟</h2>
+    <ul>
+      <li><b>رمز التحقق</b> مرتبط بإجراء وإصدار محددين، ويُحسب من بصمة محتواها؛ أي تعديل في النص يغيّر البصمة.</li>
+      <li><b>مطابقة الملف</b> تنجح فقط للملف الأصلي كما صدر من المنصة؛ إعادة حفظه أو طباعته إلى PDF جديد تغيّر بصمته — استخدم رمز التحقق عندها.</li>
+      <li>تُعرض أسماء الموقّعين وأوقات التوقيع وبصمة المحتوى، دون صور التوقيعات. كل عملية تحقق تُسجَّل في سجل التدقيق.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const BOOT=window.BOOT||null;
+const GAS=!!(BOOT&&BOOT.gas&&window.google&&google.script&&google.script.run);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDT=d=>{ const x=new Date(d); return isNaN(x)?esc(d):x.toLocaleString('ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}); };
+function pageUrl(page,qs){
+  if(GAS){ const q=new URLSearchParams(qs||''); if(page==='library'||page==='verify'||page==='howto') q.set('page',page); const t=q.toString(); return BOOT.baseUrl+(t?'?'+t:''); }
+  return ({verify:'verify.html',howto:'howto.html'}[page]||'index.html')+(qs?'?'+qs:'');
+}
+function api(req){
+  if(!GAS) return Promise.reject(new Error('صفحة التحقق تعمل من داخل منصة الإجراءات التشغيلية فقط'));
+  return new Promise((ok,no)=>google.script.run.withSuccessHandler(ok).withFailureHandler(e=>no(new Error((e&&e.message)||String(e)))).sopApi(req));
+}
+function busy(t){ $('#result').innerHTML=`<div class="card">${esc(t)}</div>`; }
+function fail(msg){ $('#result').innerHTML=`<div class="verdict v-bad"><div class="ic">✗</div><div><h3>لم يتم التحقق</h3><p>${esc(msg)}</p></div></div>`; }
+
+function show(r){
+  if(!r||!r.found) return fail(r&&r.error||'لا توجد نتيجة');
+  const replaced=r.superseded&&r.liveStatus==='معتمد';
+  const cls=r.valid?(replaced||r.removed?'v-warn':'v-ok'):'v-bad';
+  const head=r.valid?(r.how==='pdf'?'الملف مطابق للنسخة النهائية الموقّعة':'إجراء موقّع وموثّق'):'لا يمكن التحقق من سلامة هذه النسخة';
+  const sub=r.valid?`${esc(r.title)} — <b dir="ltr">${esc(r.code)}</b> · الإصدار ${esc(r.version)} · ${r.signers.length} توقيعات صحيحة`:'بصمة المحتوى المحفوظ لا تطابق بصمة التوقيعات. تواصل مع مسؤول المنصة.';
+  const warn = r.removed ? '<div class="note">⚠ هذا الإجراء لم يعد ضمن سجل الإجراءات الحالي (محذوف أو مؤرشف).</div>' :
+               replaced ? `<div class="note">⚠ اعتُمد إصدار أحدث من هذا الإجراء (${esc(r.liveVersion)}) — هذه النسخة لم تعد السارية.</div>` :
+               r.superseded ? `<div class="note" style="background:#eef3fb;color:#0a4f80">ℹ يوجد إصدار أحدث قيد الإعداد (${esc(r.liveVersion)} · ${esc(r.liveStatus)})؛ هذه النسخة هي آخر نسخة معتمدة.</div>` : '';
+  const sig=r.signers.map((x,i)=>`<tr><td>${i+1}</td><td><b>${esc(x.role)}</b><br>${esc(x.name)}</td><td><b>${esc(x.signer)}</b>${x.position?'<br>'+esc(x.position):''}<div class="mono">${esc(x.by)}</div></td><td>${fmtDT(x.at)}</td><td class="${x.match?'ok':'bad'}">${x.match?'✔ صحيح':'✗ غير مطابق'}</td></tr>`).join('');
+  const openUrl=pageUrl('editor','code='+encodeURIComponent(r.code)+'&view=1');
+  $('#result').innerHTML=`
+    <div class="verdict ${cls}"><div class="ic">${r.valid?'✔':'✗'}</div><div><h3>${head}</h3><p>${sub}</p></div></div>
+    ${warn}
+    <section class="card"><h2>بيانات الإجراء</h2><div class="scroll"><table class="kv"><tbody>
+      <tr><td>الإجراء</td><td>${esc(r.title)} — <span dir="ltr">${esc(r.code)}</span></td></tr>
+      <tr><td>الإصدار · الحالة</td><td>${esc(r.version)} · ${esc(r.status)} · ${esc(r.classification)}</td></tr>
+      <tr><td>صدرت النسخة النهائية</td><td>${fmtDT(r.finalizedAt)} <span class="mono">${esc(r.finalizedBy)}</span></td></tr>
+      <tr><td>رمز التحقق</td><td class="mono" style="font-size:15px;font-weight:700">${esc(r.verifyId)}</td></tr>
+      <tr><td>بصمة المحتوى SHA-256</td><td class="mono">${esc(r.docHash)} ${r.contentOk?'<span class="ok">✔</span>':'<span class="bad">✗</span>'}</td></tr>
+      <tr><td>بصمة ملف PDF SHA-256</td><td class="mono">${esc(r.pdfHash)}</td></tr>
+    </tbody></table></div></section>
+    <section class="card"><h2>التوقيعات</h2><div class="scroll"><table><thead><tr><th>#</th><th>المرحلة</th><th>الموقّع</th><th>التاريخ والوقت</th><th>الحالة</th></tr></thead><tbody>${sig}</tbody></table></div></section>
+    <div class="acts"><a href="${esc(openUrl)}" target="_blank" rel="noopener">عرض نص الإجراء</a><button type="button" id="dl">تنزيل PDF الموقّع الأصلي</button></div>`;
+  $('#dl').onclick=async()=>{ try{ const f=await api({action:'finalPdf',code:r.code,version:r.version}); if(!f.ok) throw new Error(f.error);
+    const bin=atob(f.b64),u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([u],{type:'application/pdf'})); a.download=f.name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+  }catch(e){ alertLine(e.message); } };
+}
+function alertLine(m){ const d=document.createElement('div'); d.className='note'; d.textContent=m; $('#result').appendChild(d); }
+
+async function byCode(id){
+  busy('جارٍ التحقق…');
+  try{ show(await api({action:'verify',id})); }catch(e){ fail(e.message); }
+}
+async function byFile(f){
+  if(!f) return;
+  if(!/\.pdf$/i.test(f.name) && f.type!=='application/pdf'){ fail('اختر ملف PDF'); return; }
+  busy('جارٍ حساب بصمة الملف داخل متصفحك…');
+  try{
+    const h=await crypto.subtle.digest('SHA-256', await f.arrayBuffer());
+    const hex=[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    $('#fp').textContent=f.name+' · SHA-256 '+hex;
+    busy('جارٍ المطابقة مع النسخ الأرشيفية…');
+    show(await api({action:'verifyHash',hash:hex}));
+  }catch(e){ fail(e.message); }
+}
+$('#fCode').addEventListener('submit',e=>{ e.preventDefault(); byCode($('#code').value); });
+$('#code').addEventListener('input',e=>{ let v=e.target.value.toUpperCase().replace(/[^0-9A-F]/g,'').slice(0,12); e.target.value=v.replace(/(.{4})(?=.)/g,'$1-'); });
+$('#file').addEventListener('change',e=>byFile(e.target.files[0]));
+const drop=$('#drop');
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop',e=>byFile(e.dataTransfer.files[0]));
+
+document.querySelectorAll('a[data-page]').forEach(a=>{ a.href=pageUrl(a.dataset.page); if(GAS&&!a.target) a.target='_top'; });
+if(GAS){ const v=(BOOT.params||{}).verify; if(v){ $('#code').value=v; byCode(v); } }
+
+window.SW_CONF='سيتم تسجيل الخروج من حسابات Google في هذا المتصفح، ثم تختار الحساب الجامعي المطلوب وتعود إلى المنصة. متابعة؟';
+/* v3.1 account chip + «تبديل الحساب» (links come from the server in BOOT) */
+(function(){
+  const B=window.BOOT||{}, host=document.getElementById('acct'); if(!host||!B.user) return;
+  const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const nm=B.userName||B.user;
+  host.className='acct'; host.title='مسجّل الدخول بحساب الجامعة'+(B.admin?' · مسؤول المنصة':'');
+  host.innerHTML='<span class="av" aria-hidden="true">'+e(nm.charAt(0).toUpperCase())+'</span><span class="nm"><b>'+e(nm)+'</b><small>'+e(B.user)+'</small></span>'+
+    (B.switchUrl?'<a class="sw" target="_top" title="تسجيل الخروج من Google ثم الدخول بحساب جامعي آخر" onclick="return confirm(SW_CONF)" href="'+e(B.switchUrl)+'"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17 3l4 4-4 4\"/><path d=\"M21 7H9\"/><path d=\"M7 21l-4-4 4-4\"/><path d=\"M3 17h12\"/></svg>تبديل الحساب</a>':'');
+})();
+/* brand header/footer (shared kit, embedded fallback) */
+window.addEventListener('load',()=>{
+  if(window.SRUBrand) return;
+  const L=window.ITOC_LOGOS||{};
+  const h=document.createElement('header'); h.className='brandbar';
+  h.innerHTML='<img src="'+(L.sru||'')+'" alt="جامعة سليمان الراجحي"><img src="'+(L.ictd||'')+'" alt="الإدارة التنفيذية للاتصالات وتقنية المعلومات">';
+  document.body.insertBefore(h,document.body.firstChild);
+  const f=document.createElement('footer'); f.className='sitefoot';
+  f.innerHTML='<span><b>التحقق من إجراء موقّع · SOP Verification</b> — الإصدار <b>v3.1</b><br>الإدارة التنفيذية للاتصالات وتقنية المعلومات · جامعة سليمان الراجحي © '+new Date().getFullYear()+'</span><img src="'+(L.itoc||'')+'" alt="ITOC">';
+  document.body.appendChild(f);
+});
+</script>
+<script src="https://ictsru.github.io/ITOC/brand/sru-brand.js" data-form-title="التحقق من إجراء موقّع · SOP Verification" data-form-version="v3.1" defer></script>
+</body>
+</html>

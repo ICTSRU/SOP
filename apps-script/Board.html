@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="version" content="3.1">
+<title>لوحة حالة الإجراءات التشغيلية | SRU SOP Register v3.1</title>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* SRU SOP Register — Status Board (SRU-FRM-SOP-01) · v3.1 */
+:root{--purple:#501e8c;--purple-dark:#3a1464;--purple-light:#f0ebf8;--blue:#0a6eaa;--bg:#f7f5fb;--border:rgba(80,30,140,.14);--ink:#241436;--muted:#6b5a80;--radius:8px}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Cairo',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7;min-height:100vh;display:flex;flex-direction:column}
+.brand{background:#fff;border-bottom:1px solid var(--border)}
+.brand .r{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 20px}
+.brand img{height:40px;width:auto;max-width:45vw;object-fit:contain}
+.strip{background:var(--purple-dark);color:#e6dcf5;font-size:12px}
+.strip .r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 20px;flex-wrap:wrap}
+.acct{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:3px 4px 3px 12px;margin:2px 0;color:#fff;font-family:inherit;line-height:1.25}
+.acct .av{width:30px;height:30px;border-radius:50%;background:#fff;color:#3a1464;font-weight:800;font-size:14px;display:grid;place-items:center;flex:0 0 auto}
+.acct .nm{display:flex;flex-direction:column;min-width:0;text-align:right}
+.acct .nm b{font-size:12.5px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.acct .nm small{direction:ltr;font-size:11px;color:#d9cdee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;text-align:right}
+.acct .sw{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.75);border-radius:999px;padding:3px 12px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap}
+.acct .sw:hover{background:rgba(255,255,255,.14)}.acct .sw:focus-visible,.acct .lo:focus-visible{outline:2px solid #8fd3ff;outline-offset:2px}
+.acct .sw svg{width:14px;height:14px}
+.acct .lo{color:#d9cdee;font-size:11px;text-decoration:underline;padding:0 6px 0 2px;white-space:nowrap}
+@media (max-width:640px){.acct .nm small{display:none}.acct .lo{display:none}}
+@media print{.acct{display:none!important}}
+.userchip{direction:ltr;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:4px;padding:0 8px}
+.userchip .role{direction:rtl;background:rgba(255,255,255,.14);margin-inline-end:6px;padding:0 6px;border-radius:3px}
+/* SRU Tech Background · Network (header band + footer) */
+.tech{position:relative;overflow:hidden;background:linear-gradient(110deg,#501e8c 0%,#4a1f8a 45%,#2b3f9e 100%);color:#fff}
+.tech.dark{background:linear-gradient(110deg,#3a1464 0%,#2e2a80 100%)}
+.tech::before{content:"";position:absolute;inset:0;background-size:520px 200px;opacity:.55;pointer-events:none;animation:drift 60s linear infinite;background-image:var(--net)}
+.tech>*{position:relative}
+@keyframes drift{from{background-position:0 0}to{background-position:520px 0}}
+@media (prefers-reduced-motion:reduce){.tech::before{animation:none}}
+.head .r{max-width:1360px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 20px}
+.head h1{margin:0;font-size:22px;font-weight:800}.head h1 span{font-weight:400;font-size:15px;opacity:.85}
+.head .sub{color:#d9cdee;font-size:13px}
+.head .tb{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--purple);background:#fff;color:var(--purple);border-radius:var(--radius);padding:6px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn:hover{background:var(--purple-light)}.btn:focus-visible{outline:3px solid #8fd3ff;outline-offset:2px}
+.btn.sm{font-size:12px;padding:2px 9px}
+.btn[disabled]{opacity:.55;cursor:wait}
+main{flex:1;width:100%;max-width:1360px;margin:0 auto;padding:18px 20px 26px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;border-top:4px solid var(--purple);cursor:pointer;text-align:right;font-family:inherit;color:inherit}
+.kpi .v{font-size:26px;font-weight:800;color:var(--purple-dark);line-height:1.2;display:block}.kpi .l{font-size:12.5px;color:var(--muted)}
+.kpi.k2{border-top-color:#9a9a9a}.kpi.k3{border-top-color:#d08b00}.kpi.k4{border-top-color:#1d7a46}.kpi.k5{border-top-color:#0a6eaa}.kpi.k6{border-top-color:#b42318}
+.kpi.on{outline:2px solid var(--purple);outline-offset:-1px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.filters input,.filters select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:13px;background:#fff;color:var(--ink)}
+.filters input{flex:1;min-width:220px}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:auto}
+table.dash{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+.dash th{background:var(--purple);color:#fff;text-align:right;padding:9px 10px;font-weight:700;white-space:nowrap;position:sticky;top:0}
+.dash td{padding:9px 10px;border-bottom:1px solid #eee6f6;vertical-align:middle}
+.dash tbody tr:hover td{background:#faf7fe}
+.dash .no{font-family:monospace;font-weight:700;color:var(--purple-dark);white-space:nowrap}
+.dash .ti b{display:block}.dash .ti small{color:var(--muted);font-size:11.5px}
+.dash .c{text-align:center}.muted{color:var(--muted)}
+.mine{display:inline-block;background:#fff1d6;color:#8a5a00;border-radius:10px;padding:0 7px;font-size:11px;font-weight:700;margin-inline-start:4px}
+.st{display:inline-block;border-radius:12px;padding:1px 10px;font-weight:700;font-size:12px;white-space:nowrap}
+.s-draft{background:#eee;color:#555}.s-rev{background:#fff1d6;color:#8a5a00}.s-ok{background:#e3f4ea;color:#1d6b3a}.s-off{background:#fde7e7;color:#b42318}
+.sg{display:flex;align-items:center;gap:6px;min-width:110px}.sg .bar{flex:1;height:7px;background:#eee6f6;border-radius:4px;overflow:hidden}.sg .bar b{display:block;height:100%;background:linear-gradient(90deg,#1d7a46,#3fae6d)}
+.sg span{font-weight:700;font-size:12px}
+.fin{display:block;color:#0a4f80;font-weight:700;font-size:12px}.vid{font-family:monospace;font-size:11.5px;color:#0a4f80}
+.pend{color:#1d6b3a;font-size:12px;font-weight:600}
+.rv{white-space:nowrap}.rv.od{color:#b42318;font-weight:700}.rv.soon{color:#8a5a00;font-weight:600}
+.act{white-space:nowrap}.act .btn{margin-inline-start:4px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.foot-note{font-size:12px;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--purple-dark);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.sitefoot .r{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 20px;font-size:12px;color:#e6dcf5}
+.sitefoot img{height:40px;background:#fff;border-radius:6px;padding:2px 6px;display:block}
+.ver{background:rgba(255,255,255,.14);border-radius:4px;padding:0 6px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.head h1{font-size:18px}.brand img{height:32px}}
+@media print{
+  .brand,.strip,.head .tb,.filters,.act,.toast,.sitefoot a{display:none!important}
+  body{background:#fff}.tech::before{display:none}.head{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  main{max-width:none;padding:8px 0}.card{overflow:visible;border:none}table.dash{min-width:0;font-size:10.5px}
+  .dash th{-webkit-print-color-adjust:exact;print-color-adjust:exact;position:static}.kpi{break-inside:avoid}
+  @page{size:A4 landscape;margin:10mm}
+}
+</style>
+</head>
+<body>
+<div class="brand"><div class="r">
+  <img data-logo="sru" alt="جامعة سليمان الراجحي | Sulaiman Alrajhi University">
+  <img data-logo="ictd" alt="الإدارة التنفيذية للاتصالات وتقنية المعلومات">
+</div></div>
+<div class="strip"><div class="r">
+  <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات</span>
+  <span id="acct"></span>
+</div></div>
+<header class="head tech"><div class="r">
+  <div><h1>لوحة حالة الإجراءات التشغيلية <span>SOP Status Board</span></h1>
+    <div class="sub">جميع الإجراءات المحفوظة في السجل وحالة اعتمادها وتوقيعها ومراجعتها</div></div>
+  <div class="tb">
+    <a class="btn" data-go="new" href="#">＋ إجراء جديد</a>
+    <button class="btn" type="button" onclick="exportCsv()">تصدير Excel</button>
+    <button class="btn" type="button" onclick="window.print()">طباعة</button>
+    <button class="btn" type="button" id="btnReload" onclick="load()">تحديث</button>
+    <a class="btn" data-go="form" href="#">النموذج ←</a>
+  </div>
+</div></header>
+
+<main>
+  <div class="kpis" id="kpis" role="group" aria-label="مؤشرات الحالة">
+    <button type="button" class="kpi" data-k="all"><span class="v" id="k_all">—</span><span class="l">إجمالي الإجراءات</span></button>
+    <button type="button" class="kpi k2" data-k="draft"><span class="v" id="k_draft">—</span><span class="l">مسودة</span></button>
+    <button type="button" class="kpi k3" data-k="rev"><span class="v" id="k_rev">—</span><span class="l">قيد المراجعة / التوقيع</span></button>
+    <button type="button" class="kpi k4" data-k="ok"><span class="v" id="k_ok">—</span><span class="l">معتمد</span></button>
+    <button type="button" class="kpi k5" data-k="final"><span class="v" id="k_final">—</span><span class="l">نسخة نهائية موقّعة</span></button>
+    <button type="button" class="kpi k6" data-k="od"><span class="v" id="k_od">—</span><span class="l">مراجعة دورية متأخرة</span></button>
+  </div>
+
+  <div class="filters">
+    <input type="search" id="q" placeholder="🔍 بحث برقم الإجراء أو العنوان أو المالك…" aria-label="بحث">
+    <select id="fDept" aria-label="الإدارة"><option value="">كل الإدارات</option></select>
+    <select id="fStatus" aria-label="الحالة"><option value="">كل الحالات</option><option>مسودة</option><option>قيد المراجعة</option><option>معتمد</option><option>ملغى</option></select>
+    <select id="fSign" aria-label="حالة التوقيع"><option value="">كل حالات التوقيع</option><option value="me">بانتظار توقيعي</option><option value="none">لم يبدأ التوقيع</option><option value="part">توقيع جزئي</option><option value="all">اكتملت التوقيعات</option><option value="final">نسخة نهائية موقّعة</option><option value="nos">بلا موقّعين</option></select>
+    <select id="fSort" aria-label="الترتيب"><option value="upd">الترتيب: آخر تحديث</option><option value="no">الترتيب: رقم الإجراء</option><option value="rv">الترتيب: المراجعة القادمة</option><option value="ti">الترتيب: العنوان</option></select>
+  </div>
+
+  <div class="card"><table class="dash"><thead><tr>
+    <th>رقم الإجراء</th><th>العنوان / الإدارة / المالك</th><th>الإصدار</th><th>الحالة</th><th>التوقيعات</th><th>النسخة النهائية</th><th>المراجعة القادمة</th><th>آخر تحديث</th><th></th>
+  </tr></thead><tbody id="tb"><tr><td colspan="9" class="empty">جارٍ تحميل الإجراءات…</td></tr></tbody></table></div>
+  <div class="foot-note"><span id="count"></span><span id="stamp"></span></div>
+</main>
+
+<footer class="sitefoot tech dark"><div class="r">
+  <span>مركز العمليات التقنية <b dir="ltr">ITOC</b> — الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي © 2026 · SRU-FRM-SOP-01 · الإصدار <span class="ver">v3.1</span></span>
+  <a href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center"><img data-logo="itoc" alt="ITOC — IT Operations Center"></a>
+</div></footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* Status board logic. No literal web addresses in this script (Apps Script rewrites them): links are built from BOOT.baseUrl. */
+const BOOT=window.BOOT||{};
+const GAS=!!(BOOT.gas&&window.google&&google.script&&google.script.run);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ITEMS=[], TODAY='', KF='all';
+const SOON_DAYS=45;
+
+function toast(t,ms){ const e=$('#toast'); e.textContent=t; e.classList.add('show'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('show'),ms||3500); }
+function call(fn,arg){ return new Promise((ok,no)=>{ const r=google.script.run.withSuccessHandler(ok).withFailureHandler(e=>no(new Error((e&&e.message)||String(e)))); arg===undefined?r[fn]():r[fn](arg); }); }
+function go(qs){ return (BOOT.baseUrl||'')+(qs?'?'+qs:''); }
+
+/* logos (embedded) + network texture */
+(function(){
+  const L=window.ITOC_LOGOS||{};
+  document.querySelectorAll('img[data-logo]').forEach(i=>{ if(L[i.dataset.logo]) i.src=L[i.dataset.logo]; });
+  const svg="<svg xmlns='"+['http:','','www.w3.org','2000','svg'].join('/')+"' width='520' height='200' viewBox='0 0 520 200'><g stroke='#8fd3ff' stroke-opacity='.35' stroke-width='1' fill='none'><path d='M20 40L110 90L200 30L300 110L390 60L500 130'/><path d='M110 90L150 170L260 150L300 110'/><path d='M390 60L430 160L500 130'/><path d='M200 30L260 150'/><path d='M20 40L60 150L150 170'/></g><g fill='#fff' fill-opacity='.75'><circle cx='20' cy='40' r='2.4'/><circle cx='110' cy='90' r='2.8'/><circle cx='200' cy='30' r='2.2'/><circle cx='300' cy='110' r='3'/><circle cx='390' cy='60' r='2.4'/><circle cx='500' cy='130' r='2.6'/><circle cx='150' cy='170' r='2.2'/><circle cx='260' cy='150' r='2.6'/><circle cx='430' cy='160' r='2.2'/><circle cx='60' cy='150' r='2'/></g></svg>";
+  document.documentElement.style.setProperty('--net','url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
+})();
+if(!BOOT.admin){ const n=document.querySelector('a[data-go=new]'); if(n) n.remove(); }
+document.querySelectorAll('a[data-go]').forEach(a=>{ a.href=go(a.dataset.go==='new'?'new=1':''); a.target='_top'; });
+
+/* ---------- derived state ---------- */
+function daysTo(d){ if(!d||!TODAY) return null; return Math.round((Date.parse(d)-Date.parse(TODAY))/864e5); }
+function overdue(x){ const n=daysTo(x.review_date); return n!==null && n<0 && x.status!=='ملغى'; }
+function soon(x){ const n=daysTo(x.review_date); return n!==null && n>=0 && n<=SOON_DAYS && x.status!=='ملغى'; }
+function signKey(x){ return x.final?'final':!x.total?'nos':x.signed===x.total?'all':x.signed?'part':'none'; }
+const STC={'مسودة':'s-draft','قيد المراجعة':'s-rev','معتمد':'s-ok','ملغى':'s-off'};
+
+/* ---------- load ---------- */
+async function load(){
+  if(!GAS){ $('#tb').innerHTML='<tr><td colspan="9" class="empty">لوحة الحالة تعمل من داخل منصة الإجراءات التشغيلية فقط.</td></tr>'; return; }
+  $('#btnReload').disabled=true;
+  try{
+    const r=await call('apiBoard'); if(!r||!r.ok) throw new Error((r&&r.error)||'تعذّر التحميل');
+    ITEMS=r.items||[]; TODAY=r.today||'';
+    $('#stamp').textContent='آخر تحديث للبيانات: '+(r.at||'');
+    const depts=[...new Set(ITEMS.map(x=>x.department).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+    const cur=$('#fDept').value;
+    $('#fDept').innerHTML='<option value="">كل الإدارات</option>'+depts.map(d=>`<option ${d===cur?'selected':''}>${esc(d)}</option>`).join('');
+    kpis(); render();
+  }catch(e){ $('#tb').innerHTML=`<tr><td colspan="9" class="empty">تعذّر تحميل الإجراءات: ${esc(e.message)}</td></tr>`; }
+  $('#btnReload').disabled=false;
+}
+function kpis(){
+  const c=k=>ITEMS.filter(k).length;
+  $('#k_all').textContent=ITEMS.length;
+  $('#k_draft').textContent=c(x=>x.status==='مسودة');
+  $('#k_rev').textContent=c(x=>x.status==='قيد المراجعة');
+  $('#k_ok').textContent=c(x=>x.status==='معتمد');
+  $('#k_final').textContent=c(x=>!!x.final);
+  $('#k_od').textContent=c(overdue);
+  document.querySelectorAll('.kpi').forEach(b=>b.classList.toggle('on',b.dataset.k===KF));
+}
+
+/* ---------- filter + render ---------- */
+function rows(){
+  const q=$('#q').value.trim().toLowerCase(), dp=$('#fDept').value, st=$('#fStatus').value, sg=$('#fSign').value, so=$('#fSort').value;
+  let L=ITEMS.filter(x=>{
+    if(KF==='draft'&&x.status!=='مسودة') return false;
+    if(KF==='rev'&&x.status!=='قيد المراجعة') return false;
+    if(KF==='ok'&&x.status!=='معتمد') return false;
+    if(KF==='final'&&!x.final) return false;
+    if(KF==='od'&&!overdue(x)) return false;
+    if(dp&&x.department!==dp) return false;
+    if(st&&x.status!==st) return false;
+    if(sg==='me'&&!x.waitingMe) return false;
+    if(sg&&sg!=='me'&&signKey(x)!==sg) return false;
+    if(q&&![x.sop_no,x.title,x.title_en,x.owner,x.department].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const cmp={upd:(a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)),
+    no:(a,b)=>String(a.sop_no).localeCompare(String(b.sop_no),'en',{numeric:true}),
+    rv:(a,b)=>(a.review_date||'9999').localeCompare(b.review_date||'9999'),
+    ti:(a,b)=>String(a.title).localeCompare(String(b.title),'ar')}[so];
+  return L.sort(cmp);
+}
+function render(){
+  const L=rows();
+  $('#count').textContent=L.length+' من '+ITEMS.length+' إجراءات · الأرقام في البطاقات تعمل كمرشّحات';
+  if(!L.length){ $('#tb').innerHTML=`<tr><td colspan="9" class="empty">${ITEMS.length?'لا توجد إجراءات مطابقة للمرشّحات.':'لا توجد إجراءات محفوظة في السجل بعد.'}</td></tr>`; return; }
+  $('#tb').innerHTML=L.map(x=>{
+    const pct=x.total?Math.round(100*x.signed/x.total):0;
+    const sig=x.total?`<div class="sg" title="${x.waitingFor.length?'بانتظار: '+esc(x.waitingFor.join('، ')):'اكتملت التوقيعات'}"><div class="bar"><b style="width:${pct}%"></b></div><span>${x.signed}/${x.total}</span></div>${x.waitingMe?'<span class="mine">بانتظار توقيعك</span>':''}`:'<span class="muted">لا موقّعين</span>';
+    const fin=x.final?`<span class="fin">🔒 نسخة نهائية</span><span class="vid" dir="ltr">${esc(x.final.verifyId)}</span>`:
+      (x.total&&x.signed===x.total?'<span class="pend">اكتملت — بانتظار الإصدار</span>':'<span class="muted">—</span>');
+    const od=overdue(x), sn=soon(x);
+    const rv=`<span class="rv ${od?'od':sn?'soon':''}">${esc(x.review_date||'—')}${od?' · متأخرة':sn?' · قريبًا':''}</span>`;
+    return `<tr><td class="no" dir="ltr">${esc(x.sop_no)}</td>
+      <td class="ti"><b>${esc(x.title||'—')}</b><small>${esc(x.department||'—')} · المالك: ${esc(x.owner||'—')}</small></td>
+      <td class="c">${esc(x.version)}</td><td><span class="st ${STC[x.status]||'s-draft'}">${esc(x.status)}</span></td>
+      <td>${sig}</td><td>${fin}</td><td>${rv}</td><td class="muted c">${esc(String(x.updated_at||'').slice(0,10))}</td>
+      <td class="act"><a class="btn sm" target="_top" href="${esc(go('code='+encodeURIComponent(x.sop_no)))}">فتح</a>${x.final?`<button class="btn sm" type="button" onclick="pdf('${esc(x.sop_no)}','${esc(x.version)}',this)">PDF</button>`:''}</td></tr>`;
+  }).join('');
+}
+
+/* ---------- actions ---------- */
+async function pdf(code, ver, btn){
+  btn.disabled=true; toast('جارٍ تنزيل النسخة النهائية…');
+  try{ const r=await call('sopApi',{action:'finalPdf', code, version:ver}); if(!r.ok) throw new Error(r.error);
+    const bin=atob(r.b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    save(new Blob([u],{type:'application/pdf'}), r.name); }
+  catch(e){ toast(e.message,6000); }
+  btn.disabled=false;
+}
+function save(blob, name){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+}
+function exportCsv(){
+  const L=rows(); if(!L.length){ toast('لا توجد بيانات للتصدير'); return; }
+  const H=['رقم الإجراء','العنوان','الإدارة','المالك','الإصدار','الحالة','التوقيعات','بانتظار','النسخة النهائية','رمز التحقق','المراجعة القادمة','حالة المراجعة','آخر تحديث'];
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const lines=[H.map(q).join(',')].concat(L.map(x=>[x.sop_no,x.title,x.department,x.owner,x.version,x.status,x.total?x.signed+'/'+x.total:'—',x.waitingFor.join('، '),
+    x.final?'نعم':'لا',x.final?x.final.verifyId:'',x.review_date,overdue(x)?'متأخرة':soon(x)?'قريبًا':'',x.updated_at].map(q).join(',')));
+  save(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),'SOP-Status-Board_'+(TODAY||'')+'.csv');
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('.kpi').forEach(b=>b.addEventListener('click',()=>{ KF=(KF===b.dataset.k&&KF!=='all')?'all':b.dataset.k; kpis(); render(); }));
+['#q','#fDept','#fStatus','#fSign','#fSort'].forEach(s=>$(s).addEventListener(s==='#q'?'input':'change',render));
+window.SW_CONF='سيتم تسجيل الخروج من حسابات Google في هذا المتصفح، ثم تختار الحساب الجامعي المطلوب وتعود إلى المنصة. متابعة؟';
+/* v3.1 account chip + «تبديل الحساب» (links come from the server in BOOT) */
+(function(){
+  const B=window.BOOT||{}, host=document.getElementById('acct'); if(!host||!B.user) return;
+  const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const nm=B.userName||B.user;
+  host.className='acct'; host.title='مسجّل الدخول بحساب الجامعة'+(B.admin?' · مسؤول المنصة':'');
+  host.innerHTML='<span class="av" aria-hidden="true">'+e(nm.charAt(0).toUpperCase())+'</span><span class="nm"><b>'+e(nm)+'</b><small>'+e(B.user)+'</small></span>'+
+    (B.switchUrl?'<a class="sw" target="_top" title="تسجيل الخروج من Google ثم الدخول بحساب جامعي آخر" onclick="return confirm(SW_CONF)" href="'+e(B.switchUrl)+'"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17 3l4 4-4 4\"/><path d=\"M21 7H9\"/><path d=\"M7 21l-4-4 4-4\"/><path d=\"M3 17h12\"/></svg>تبديل الحساب</a>':'');
+})();
+load();
+</script>
+</body>
+</html>

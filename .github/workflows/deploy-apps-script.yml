@@ -1,0 +1,56 @@
+# SRU SOP Register — automatic Apps Script update · autodeploy v1.0
+# Every push that changes apps-script/** (or a manual "Run workflow") pushes the files to the Apps Script
+# project and moves the EXISTING web-app deployment to a new version — the /exec URL stays the same.
+# Secrets (Settings ▸ Secrets and variables ▸ Actions): CLASPRC_JSON · SCRIPT_ID · DEPLOYMENT_ID
+name: Deploy Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps-script/**']
+  workflow_dispatch:
+
+concurrency: apps-script-deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+      DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp (pinned)
+        run: npm install -g @google/clasp@2.4.2
+
+      - name: Credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          test -n "$CLASPRC_JSON" && test -n "$SCRIPT_ID" && test -n "$DEPLOYMENT_ID" || { echo "::error::Missing secret (CLASPRC_JSON / SCRIPT_ID / DEPLOYMENT_ID)"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+
+      - name: Keep the live project's manifest (appsscript.json)
+        run: |
+          mkdir -p /tmp/live && cd /tmp/live
+          printf '{"scriptId":"%s"}' "$SCRIPT_ID" > .clasp.json
+          clasp pull
+          cp appsscript.json "$GITHUB_WORKSPACE/apps-script/appsscript.json"
+
+      - name: Push files (Code, Sop, Sign, Index, Board, Verify, HowTo, Logos, Denied)
+        working-directory: apps-script
+        run: |
+          printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > .clasp.json
+          clasp push --force
+
+      - name: New version on the same deployment (URL unchanged)
+        working-directory: apps-script
+        run: |
+          VER=$(grep -oP "APP_VERSION\s*=\s*'\K[0-9.]+" Code.gs || echo "?")
+          clasp deploy -i "$DEPLOYMENT_ID" -d "v$VER · ${GITHUB_SHA::7}"
+          echo "### ✅ Apps Script updated to v$VER (same /exec URL)" >> "$GITHUB_STEP_SUMMARY"

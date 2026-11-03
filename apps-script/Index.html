@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="version" content="<?= version ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+window.__pageErrors = [];
+window.addEventListener('error', function (e) {
+  window.__pageErrors.push(e);
+  if (window.__pageErrors.length > 1) return;                 // keep the FIRST error visible
+  var src = String(e.filename || '').split('/').pop().split('?')[0];
+  var msg = 'خطأ في الصفحة: ' + (e.message || e) + (e.lineno ? ' (' + (src || 'page') + ' سطر ' + e.lineno + ')' : '');
+  var show = function () { var s = document.getElementById('status'); if (s) { s.textContent = msg; s.title = msg; } };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', show) : show();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+:root{
+  --purple:#501e8c; --purple-dark:#3a1464; --purple-light:#f0ebf8;
+  --blue:#0a6eaa; --blue-light:#e6f3fa;
+  --bg:#f7f5fb; --border:rgba(80,30,140,.12);
+  --ink:#241436; --muted:#6b5a80; --radius:4px;
+  --ok:#1f7a4d; --warn:#b26a00; --err:#b3261e;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Cairo',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7}
+.en{direction:ltr;unicode-bidi:isolate;font-size:.86em;color:var(--muted);font-weight:600}
+.container{max-width:1080px;margin:0 auto;padding:0 16px}
+
+/* ===== Header (SRU brand kit: white brand bar · strip · network band) ===== */
+html,body{height:100%}
+body{display:flex;flex-direction:column;min-height:100vh}
+.brand{background:#fff;border-bottom:1px solid var(--border)}
+.brand .row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 20px}
+.brand img{height:40px;width:auto;max-width:45vw;object-fit:contain}
+.logo-fallback{font-weight:700;color:var(--purple);font-size:13px}
+.strip{background:var(--purple-dark);color:#e6dcf5;font-size:12px}
+.strip .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 20px;flex-wrap:wrap}
+.acct{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:3px 4px 3px 12px;margin:2px 0;color:#fff;font-family:inherit;line-height:1.25}
+.acct .av{width:30px;height:30px;border-radius:50%;background:#fff;color:#3a1464;font-weight:800;font-size:14px;display:grid;place-items:center;flex:0 0 auto}
+.acct .nm{display:flex;flex-direction:column;min-width:0;text-align:right}
+.acct .nm b{font-size:12.5px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.acct .nm small{direction:ltr;font-size:11px;color:#d9cdee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;text-align:right}
+.acct .sw{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.75);border-radius:999px;padding:3px 12px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap}
+.acct .sw:hover{background:rgba(255,255,255,.14)}.acct .sw:focus-visible,.acct .lo:focus-visible{outline:2px solid #8fd3ff;outline-offset:2px}
+.acct .sw svg{width:14px;height:14px}
+.acct .lo{color:#d9cdee;font-size:11px;text-decoration:underline;padding:0 6px 0 2px;white-space:nowrap}
+@media (max-width:640px){.acct .nm small{display:none}.acct .lo{display:none}}
+@media print{.acct{display:none!important}}
+.userchip{direction:ltr;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:3px;padding:0 8px}
+.userchip .role{direction:rtl;background:rgba(255,255,255,.18);border-radius:2px;padding:0 6px}
+.band-head{color:#fff}
+.band-head .row{padding:10px 20px 12px}
+.band-head .title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.band-head h1{margin:0;font-size:20px;font-weight:800}
+.band-head .en{color:#d9cdef}
+.verchip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:1px 10px;border-radius:999px;font-size:12px;margin-inline-start:auto}
+.diag{height:5px;background:repeating-linear-gradient(135deg,var(--blue) 0 14px,#fff 14px 18px,var(--blue) 18px 18px)}
+.notice{background:#fff8e6;border-bottom:1px solid #f1dfb3;color:#7a5a12;font-size:12.5px}
+.notice .row{display:flex;align-items:center;gap:8px;padding:5px 20px}
+.notice svg{width:15px;height:15px}
+
+/* SRU Tech Background · Network v1.0 (brand-kit spec: gradient + drifting node tile, off for reduced motion and print) */
+.sru-tech-bg,.sru-tech-bg-dark{position:relative;overflow:hidden;isolation:isolate}
+.sru-tech-bg{background:linear-gradient(110deg,#501e8c 0%,#4a1f8a 45%,#2b3f9e 100%)}
+.sru-tech-bg-dark{background:linear-gradient(110deg,#3a1464 0%,#2e2a80 100%)}
+.sru-tech-bg::before,.sru-tech-bg-dark::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='200' viewBox='0 0 520 200'%3E%3Cg stroke='%238fd3ff' stroke-opacity='.35' stroke-width='1' fill='none'%3E%3Cpath d='M20 40L110 90L200 30L300 110L390 60L500 130'/%3E%3Cpath d='M110 90L150 170L260 150L300 110'/%3E%3Cpath d='M390 60L430 160L500 130'/%3E%3Cpath d='M200 30L260 150'/%3E%3Cpath d='M20 40L60 150L150 170'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='.75'%3E%3Ccircle cx='20' cy='40' r='2.4'/%3E%3Ccircle cx='110' cy='90' r='2.8'/%3E%3Ccircle cx='200' cy='30' r='2.2'/%3E%3Ccircle cx='300' cy='110' r='3'/%3E%3Ccircle cx='390' cy='60' r='2.4'/%3E%3Ccircle cx='500' cy='130' r='2.6'/%3E%3Ccircle cx='150' cy='170' r='2.2'/%3E%3Ccircle cx='260' cy='150' r='2.6'/%3E%3Ccircle cx='430' cy='160' r='2.2'/%3E%3Ccircle cx='60' cy='150' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:520px 200px;animation:sruNetDrift 40s linear infinite}
+@keyframes sruNetDrift{from{background-position:0 0}to{background-position:-520px 0}}
+@media (prefers-reduced-motion:reduce){.sru-tech-bg::before,.sru-tech-bg-dark::before{animation:none}}
+
+/* Toolbar (inside the network band) */
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.btn{font-family:inherit;font-size:13px;font-weight:700;border-radius:var(--radius);padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--purple);background:#fff;color:var(--purple)}
+.btn.primary{background:var(--purple);color:#fff}
+.toolbar .btn{border-color:#fff;background:#fff;color:var(--purple)}
+.toolbar .btn.primary{background:#fff;color:var(--purple)}
+.toolbar .btn.ghost{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.7)}
+.btn svg{width:16px;height:16px}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.icon{padding:3px 6px}
+.spacer{flex:1}
+#status{color:#7a5a12;font-size:12.5px;font-weight:600}
+
+/* ===== Workspace: editor (right) · live preview (left) ===== */
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(440px,40%) 1fr;gap:0}
+.editor{overflow:auto;padding:14px 14px 30px;border-inline-end:1px solid var(--border);background:var(--bg)}
+.preview{overflow:auto;background:#e9e5f0;padding:20px 16px 40px}
+.pvbar{position:sticky;top:-20px;z-index:2;display:flex;align-items:center;gap:8px;justify-content:space-between;margin:-20px -16px 14px;padding:8px 16px;background:#e9e5f0cc;backdrop-filter:blur(4px);font-size:12px;color:var(--muted)}
+.pvbar b{color:var(--purple-dark)}
+.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;box-shadow:0 6px 24px rgba(58,20,100,.14);padding:12mm 14mm;transform-origin:top center}
+.paneTabs{display:none}
+@media (max-width:1000px){
+  html,body{height:auto}
+  .workspace{display:block}
+  .editor,.preview{overflow:visible;border:0}
+  .paneTabs{display:flex;gap:6px;padding:8px 14px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+  .paneTabs button{flex:1}
+  .paneTabs button.on{background:var(--purple);color:#fff}
+  body[data-pane="edit"] .preview{display:none}
+  body[data-pane="view"] .editor{display:none}
+}
+/* editor is narrower than the old page: fields stack sooner */
+.editor .grid{grid-template-columns:repeat(12,1fr)}
+.editor .c3,.editor .c4{grid-column:span 6}
+.editor .c6{grid-column:span 12}
+.editor .card .body{padding:12px 14px}
+.editor .card>h2{font-size:14px;padding:8px 14px}
+.editor .recbar{margin-bottom:12px}
+.editor .recbar select{min-width:0;flex:1 1 100%}
+/* repeating rows as compact cards */
+.rows{display:flex;flex-direction:column;gap:8px}
+.rowcard{border:1px solid var(--border);border-inline-start:3px solid var(--blue);border-radius:var(--radius);background:#fcfbfe;padding:8px 10px}
+.rowcard .rh{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-weight:800;color:var(--purple-dark);font-size:12.5px}
+.rowcard .rh .sp{flex:1}
+.rowcard .rf{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 10px}
+.rowcard .rf .wide{grid-column:1/-1}
+.rowcard label{font-size:11.5px;margin-bottom:1px}
+.rowcard textarea{min-height:52px}
+
+/* Cards */
+main{padding:18px 0 40px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.card>h2{margin:0;padding:10px 16px;font-size:15px;background:var(--purple-light);color:var(--purple-dark);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card>h2 .num{background:var(--purple);color:#fff;border-radius:var(--radius);min-width:26px;text-align:center;font-size:13px}
+.card .body{padding:14px 16px}
+.hint{font-size:12px;color:var(--muted);margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px 14px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c6{grid-column:span 6}.c8{grid-column:span 8}.c12{grid-column:span 12}
+@media(max-width:760px){.c3,.c4,.c6,.c8{grid-column:span 12}}
+label{display:block;font-weight:700;font-size:13px;margin-bottom:3px}
+label .req{color:var(--err)}
+input,select,textarea{width:100%;font-family:inherit;font-size:13.5px;color:var(--ink);border:1px solid rgba(80,30,140,.25);border-radius:var(--radius);padding:6px 9px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(10,110,170,.35);border-color:var(--blue)}
+textarea{min-height:70px;resize:vertical}
+input[readonly]{background:var(--purple-light)}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px}
+.checks label{font-weight:600;display:flex;gap:6px;align-items:center;margin:0}
+.checks input{width:auto}
+.inline{display:flex;gap:6px}
+.inline>*{flex:1}
+
+/* Dynamic tables */
+.dtable{width:100%;border-collapse:collapse;font-size:13px}
+.dtable th{background:var(--purple);color:#fff;font-weight:700;padding:6px;text-align:right;white-space:nowrap}
+.dtable td{border-bottom:1px solid var(--border);padding:5px;vertical-align:top}
+.dtable td.idx{width:34px;text-align:center;font-weight:800;color:var(--purple)}
+.dtable td.act{width:90px;white-space:nowrap}
+.dtable textarea{min-height:40px}
+.tablewrap{overflow-x:auto}
+.addrow{margin-top:8px}
+
+/* Record picker */
+.recbar{background:#fff;border:1px solid var(--border);border-inline-start:4px solid var(--blue);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.recbar label{margin:0;white-space:nowrap}
+.recbar select{flex:1;min-width:240px}
+.mode{font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.mode.new{background:var(--blue-light);color:var(--blue)}
+.mode.edit{background:#fff3dc;color:var(--warn)}
+/* Footer (brand kit: dark network band, ITOC logo bottom-left) */
+.sitefoot{color:#e6dcf5;font-size:12px}
+.sitefoot .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 20px}
+.sitefoot .ver{background:rgba(255,255,255,.12);padding:0 8px;border-radius:3px;direction:ltr}
+.itoc-link{display:inline-flex;align-items:center;background:#fff;border-radius:4px;padding:2px 6px}
+.itoc-link img{height:26px;width:auto}
+/* Toast / modal */
+#toast{position:fixed;bottom:18px;left:18px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius);opacity:0;transition:.25s;z-index:99;max-width:90vw}
+#toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(36,20,54,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.open{display:flex}
+.modal .box{background:#fff;border-radius:var(--radius);max-width:760px;width:100%;max-height:85vh;overflow:auto}
+.modal .box h3{margin:0;padding:10px 16px;background:var(--purple);color:#fff;font-size:15px}
+.modal .box .body{padding:14px 16px}
+.list-table{width:100%;border-collapse:collapse;font-size:13px}
+.list-table th,.list-table td{border-bottom:1px solid var(--border);padding:6px;text-align:right}
+.list-table tr:hover td{background:var(--purple-light);cursor:pointer}
+.badge{display:inline-block;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:700}
+.b-draft{background:#eee;color:#555}.b-review{background:#fff3dc;color:var(--warn)}.b-approved{background:#e3f4ea;color:var(--ok)}.b-retired{background:#fbe4e2;color:var(--err)}
+
+/* Print: exactly what the preview shows */
+@media print{
+  @page{size:A4;margin:12mm 14mm 14mm}
+  html,body{height:auto;display:block;background:#fff;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .no-print,.brand,.strip,.band-head,.diag,.notice,.paneTabs,.editor,.pvbar,.sitefoot,#toast,.modal{display:none!important}
+  .workspace{display:block}
+  .preview{display:block!important;overflow:visible;background:#fff;padding:0}
+  .sheet{width:auto;min-height:0;box-shadow:none;padding:0;margin:0;zoom:1!important;transform:none!important}
+}
+.pd .pgwrap{width:100%;border-collapse:collapse;margin:0}
+.pd .pgwrap>thead>tr>td,.pd .pgwrap>tbody>tr>td{border:0;padding:0}
+.pd .pghead{display:flex;justify-content:space-between;align-items:center;padding-bottom:5px;margin-bottom:8px;border-bottom:1px solid #cbbfe0}
+.pd .pghead img.s{height:38px}.pd .pghead img.i{height:50px}
+.pd .pghead .ref{font-size:9.5px;color:var(--muted);text-align:center;line-height:1.5}
+.pd h1{font-size:17px;margin:4px 0 0;color:var(--purple-dark)}
+.pd .sub{color:var(--muted);direction:ltr;text-align:right;font-weight:600;margin-bottom:6px}
+.pd .band{height:4px;background:repeating-linear-gradient(135deg,var(--blue) 0 12px,var(--purple) 12px 24px);margin:6px 0 10px}
+.pd table{width:100%;border-collapse:collapse;margin-bottom:8px}
+.pd th,.pd td{border:1px solid #cbbfe0;padding:4px 6px;text-align:right;vertical-align:top}
+.pd th{background:var(--purple-light);color:var(--purple-dark);font-weight:700}
+.pd .sec{background:var(--purple);color:#fff;padding:3px 8px;font-weight:800;margin:10px 0 5px;border-radius:2px;page-break-after:avoid}
+.pd .sec .en{color:#e6dcf5}
+.pd .kv th{width:24%}
+.pd .txt{white-space:pre-wrap;border:1px solid #cbbfe0;padding:5px 7px;margin-bottom:6px;min-height:22px}
+.pd .sig td{height:52px}
+.pd tr{page-break-inside:avoid}
+.pd .foot{margin-top:10px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #cbbfe0;padding-top:4px}
+</style>
+</head>
+<body>
+
+<!-- Header: white brand bar (SRU right, ICTD left) -->
+<div class="brand"><div class="row">
+  <img data-logo="sru" alt="جامعة سليمان الراجحي | Sulaiman Alrajhi University" class="logo-sru">
+  <img data-logo="ictd" alt="الإدارة التنفيذية للاتصالات وتقنية المعلومات" class="logo-ictd">
+</div></div>
+<div class="strip"><div class="row">
+  <span>جامعة سليمان الراجحي — الإدارة التنفيذية للاتصالات وتقنية المعلومات</span>
+  <span class="acct" title="مسجّل الدخول بحساب الجامعة · <?= userRole ?>"><span class="av" aria-hidden="true"><?= (userName || userEmail || "?").charAt(0).toUpperCase() ?></span><span class="nm"><b><?= userName ?></b><small><?= userEmail ?></small></span><a class="sw" href="<?= switchUrl ?>" target="_top" title="تسجيل الخروج من Google ثم الدخول بحساب جامعي آخر" onclick="return confirm('سيتم تسجيل الخروج من حسابات Google في هذا المتصفح، ثم تختار الحساب الجامعي المطلوب وتعود إلى المنصة. متابعة؟')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3l4 4-4 4"/><path d="M21 7H9"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h12"/></svg>تبديل الحساب</a></span>
+</div></div>
+<header class="band-head sru-tech-bg"><div class="row">
+  <div class="title">
+    <h1>نموذج إجراء تشغيلي قياسي <span class="en">Standard Operating Procedure (SOP) Template</span></h1>
+    <span class="verchip">إصدار النموذج <b id="tplVer">3.1</b> · SRU-FRM-SOP-01</span>
+  </div>
+  <div class="toolbar no-print">
+    <button class="btn primary" onclick="saveToSheet()"><i data-lucide="cloud-upload"></i>حفظ في Google Sheets</button>
+    <button class="btn" onclick="openList()"><i data-lucide="folder-open"></i>السجل</button>
+    <button class="btn" onclick="printDoc()"><i data-lucide="printer"></i>طباعة / PDF</button>
+    <button class="btn" onclick="openSigs()"><i data-lucide="signature"></i>توقيعاتي</button>
+    <button class="btn ghost glow" onclick="openHowTo()"><i data-lucide="play-circle"></i>كيفية التوقيع</button>
+    <button class="btn ghost" onclick="openVerify()"><i data-lucide="shield-check"></i>التحقق</button>
+    <button class="btn ghost" onclick="openBoard()"><i data-lucide="layout-dashboard"></i>لوحة الحالة</button>
+    <? if (isAdmin) { ?>
+    <button class="btn ghost" onclick="newSop()"><i data-lucide="file-plus"></i>جديد</button>
+    <button class="btn ghost" onclick="loadExample()"><i data-lucide="sparkles"></i>تحميل المثال</button>
+    <button class="btn ghost" onclick="exportJSON()"><i data-lucide="download"></i>JSON</button>
+    <button class="btn ghost" onclick="document.getElementById('jsonIn').click()"><i data-lucide="upload"></i>استيراد</button>
+    <input type="file" id="jsonIn" accept=".json" hidden onchange="importJSON(event)">
+    <? } ?>
+  </div>
+</div></header>
+<div class="diag"></div>
+<div class="notice no-print"><div class="row"><i data-lucide="info"></i><span id="status">عدّل البيانات في اللوحة اليمنى، وتظهر الوثيقة مباشرة في المعاينة على اليسار.</span></div></div>
+<div id="sigbar" class="sigbar no-print" hidden></div>
+<div class="paneTabs no-print">
+  <button class="btn sm on" data-pane="edit" onclick="showPane('edit')"><i data-lucide="pencil"></i>تحرير</button>
+  <button class="btn sm" data-pane="view" onclick="showPane('view')"><i data-lucide="file-text"></i>معاينة</button>
+</div>
+
+<div class="workspace">
+<aside class="editor no-print" id="form" aria-label="تحرير الإجراء">
+
+  <div class="recbar no-print">
+    <label for="recSel"><i data-lucide="list"></i> السجلات المحفوظة <span class="en">Saved SOPs</span></label>
+    <select id="recSel" onchange="pickRecord(this.value)"><option value="">جارٍ تحميل السجلات...</option></select>
+    <button class="btn sm" title="تحديث القائمة" onclick="loadRecords()"><i data-lucide="refresh-cw"></i>تحديث</button>
+    <span id="modeTag" class="mode new">إجراء جديد</span>
+  </div>
+
+  <!-- 1. Identification -->
+  <section class="card">
+    <h2><span class="num">1</span>بيانات الإجراء <span class="en">SOP Identification</span></h2>
+    <div class="body grid">
+      <div class="c3"><label>رمز الجهة <span class="en">Unit Code</span></label><input data-f="unit_code" placeholder="ICTD"></div>
+      <div class="c3"><label>رقم الإجراء <span class="en">SOP No.</span></label><input data-f="sop_no" readonly placeholder="يُولَّد تلقائياً عند الحفظ"></div>
+      <div class="c3"><label>الحالة <span class="en">Status</span></label>
+        <select data-f="status"><option>مسودة</option><option>قيد المراجعة</option><option>معتمد</option><option>ملغى</option></select></div>
+      <div class="c3"><label>التصنيف <span class="en">Classification</span></label>
+        <select data-f="classification"><option>داخلي</option><option>عام</option><option>مقيّد</option><option>سري</option></select></div>
+      <div class="c6"><label>عنوان الإجراء (عربي) <span class="req">*</span></label><input data-f="title_ar" required></div>
+      <div class="c6"><label>SOP Title (English)</label><input data-f="title_en" dir="ltr"></div>
+      <div class="c6"><label>الإدارة / الوحدة <span class="en">Department / Unit</span></label><input data-f="department"></div>
+      <div class="c6"><label>فئة الخدمة <span class="en">Service Category</span></label><input data-f="category" list="cats">
+        <datalist id="cats"><option>إدارة الهوية والصلاحيات</option><option>البنية التحتية والشبكات</option><option>الأمن السيبراني</option><option>الأنظمة المؤسسية (Oracle Fusion)</option><option>خدمات المستخدمين</option><option>الخدمات السحابية</option></datalist></div>
+    </div>
+  </section>
+
+  <!-- 2. Purpose, scope, owner -->
+  <section class="card">
+    <h2><span class="num">2</span>الغرض والنطاق والمالك <span class="en">Purpose, Scope &amp; Owner</span></h2>
+    <div class="body grid">
+      <div class="c12"><label>الغرض <span class="en">Purpose</span> <span class="req">*</span></label><textarea data-f="purpose" required></textarea></div>
+      <div class="c6"><label>النطاق — يشمل <span class="en">In Scope</span></label><textarea data-f="scope_in"></textarea></div>
+      <div class="c6"><label>خارج النطاق <span class="en">Out of Scope</span></label><textarea data-f="scope_out"></textarea></div>
+      <div class="c4"><label>مالك الإجراء (الدور) <span class="en">Owner Role</span> <span class="req">*</span></label><input data-f="owner_role" required></div>
+      <div class="c4"><label>اسم المالك <span class="en">Owner Name</span></label><input data-f="owner_name"></div>
+      <div class="c4"><label>بريد المالك <span class="en">Owner Email</span></label><input data-f="owner_email" type="email" dir="ltr"></div>
+    </div>
+  </section>
+
+  <!-- 3. Request channel, prerequisites, approvals -->
+  <section class="card">
+    <h2><span class="num">3</span>قناة الطلب والمتطلبات والموافقات <span class="en">Request Channel, Prerequisites &amp; Approvals</span></h2>
+    <div class="body grid">
+      <div class="c12"><label>قناة استقبال الطلب <span class="en">Request Channel</span></label>
+        <div class="checks" id="channels">
+          <label><input type="checkbox" value="بوابة الخدمات (ServiceDesk Plus ESM)">بوابة الخدمات (ServiceDesk Plus ESM)</label>
+          <label><input type="checkbox" value="البريد الإلكتروني">البريد الإلكتروني</label>
+          <label><input type="checkbox" value="الهاتف / التحويلة">الهاتف / التحويلة</label>
+          <label><input type="checkbox" value="الحضور الشخصي">الحضور الشخصي</label>
+          <label><input type="checkbox" value="خطاب / معاملة رسمية">خطاب / معاملة رسمية</label>
+          <label><input type="checkbox" value="تلقائي من نظام آخر">تلقائي من نظام آخر</label>
+        </div></div>
+      <div class="c12"><label>قنوات أخرى / ملاحظات <span class="en">Other Channel</span></label><input data-f="channel_other"></div>
+      <div class="c12"><label>المتطلبات المسبقة <span class="en">Prerequisites</span> <span class="hint">(سطر لكل متطلب)</span></label><textarea data-f="prerequisites"></textarea></div>
+      <div class="c12"><label>الموافقات المطلوبة <span class="en">Required Approvals</span></label>
+        <div class="rows" id="t_approvals"></div>
+        <button class="btn sm addrow" onclick="addRow('approvals')"><i data-lucide="plus"></i>إضافة موافقة</button></div>
+    </div>
+  </section>
+
+  <!-- 4. Steps -->
+  <section class="card">
+    <h2><span class="num">4</span>خطوات التنفيذ والأدوار المسؤولة <span class="en">Procedure Steps &amp; Responsible Roles</span></h2>
+    <div class="body">
+      <p class="hint">تُرقَّم الخطوات تلقائياً؛ استخدم الأسهم لإعادة الترتيب. تظهر التغييرات فوراً في المعاينة.</p>
+      <div class="rows" id="t_steps"></div>
+      <button class="btn sm addrow" onclick="addRow('steps')"><i data-lucide="plus"></i>إضافة خطوة</button>
+    </div>
+  </section>
+
+  <!-- 5. SLA & escalation -->
+  <section class="card">
+    <h2><span class="num">5</span>زمن الإنجاز المستهدف ومعايير التصعيد <span class="en">Target Completion Time &amp; Escalation</span></h2>
+    <div class="body grid">
+      <div class="c4"><label>زمن الإنجاز المستهدف <span class="en">Target Time</span> <span class="req">*</span></label>
+        <div class="inline"><input data-f="target_value" type="number" min="0" step="0.5" required>
+          <select data-f="target_unit"><option>ساعة عمل</option><option>يوم عمل</option><option>دقيقة</option><option>أسبوع</option></select></div></div>
+      <div class="c4"><label>الأولوية الافتراضية <span class="en">Default Priority</span></label>
+        <select data-f="priority"><option>منخفضة</option><option>متوسطة</option><option>عالية</option><option>حرجة</option></select></div>
+      <div class="c4"><label>يبدأ احتساب الوقت من <span class="en">SLA Clock Starts</span></label><input data-f="sla_start"></div>
+      <div class="c12"><label>معايير التصعيد <span class="en">Escalation Criteria</span></label>
+        <div class="rows" id="t_escalations"></div>
+        <button class="btn sm addrow" onclick="addRow('escalations')"><i data-lucide="plus"></i>إضافة مستوى تصعيد</button></div>
+    </div>
+  </section>
+
+  <!-- 6. Verification, closure, exceptions -->
+  <section class="card">
+    <h2><span class="num">6</span>التحقق وأدلة الإغلاق والاستثناءات <span class="en">Verification, Closure Evidence &amp; Exceptions</span></h2>
+    <div class="body grid">
+      <div class="c6"><label>طريقة التحقق <span class="en">Verification</span> <span class="req">*</span></label><textarea data-f="verification" required></textarea></div>
+      <div class="c6"><label>أدلة الإغلاق <span class="en">Closure Evidence</span> <span class="req">*</span></label><textarea data-f="closure_evidence" required></textarea></div>
+      <div class="c12"><label>الاستثناءات وطريقة معالجتها <span class="en">Exceptions &amp; Handling</span></label><textarea data-f="exceptions"></textarea></div>
+      <div class="c12"><label>المراجع والوثائق ذات العلاقة <span class="en">References / Related Documents</span></label><textarea data-f="references"></textarea></div>
+    </div>
+  </section>
+
+  <!-- 7. Document control -->
+  <section class="card">
+    <h2><span class="num">7</span>ضبط الوثيقة والاعتماد <span class="en">Document Control &amp; Approval</span></h2>
+    <div class="body grid">
+      <div class="c3"><label>رقم الإصدار <span class="en">Version</span> <span class="req">*</span></label>
+        <div class="inline"><input data-f="version" required placeholder="1.0" style="flex:2"><button class="btn sm" title="إصدار تالٍ" onclick="bumpVersion()" style="flex:1">+0.1</button></div></div>
+      <div class="c3"><label>تاريخ السريان <span class="en">Effective Date</span></label><input data-f="effective_date" type="date"></div>
+      <div class="c3"><label>دورة المراجعة <span class="en">Review Cycle</span></label>
+        <select data-f="review_cycle" onchange="calcReview()"><option value="6">كل 6 أشهر</option><option value="12" selected>سنوياً</option><option value="24">كل سنتين</option></select></div>
+      <div class="c3"><label>تاريخ المراجعة القادمة <span class="en">Next Review</span></label><input data-f="review_date" type="date"></div>
+      <div class="c12"><label>الموقّعون — اعتماد الوثيقة <span class="en">Signers (e-signature)</span> <span class="req">*</span></label>
+        <p class="hint">أضف خانة لكل موقّع (المرحلة، الاسم أو المسمى، البريد الجامعي). صاحب البريد وحده يرى زر «توقيع» في خانته بعد حفظ الإجراء.</p>
+        <div class="rows" id="t_signers"></div>
+        <button class="btn sm addrow" onclick="addRow('signers')"><i data-lucide="user-plus"></i>إضافة موقّع</button></div>
+      <div class="c4"><label>تاريخ الاعتماد <span class="en">Approval Date</span></label><input data-f="approval_date" type="date" onchange="calcReview()"></div>
+      <div class="c12"><label>سجل التعديلات <span class="en">Revision History</span></label>
+        <div class="rows" id="t_revisions"></div>
+        <button class="btn sm addrow" onclick="addRow('revisions')"><i data-lucide="plus"></i>إضافة تعديل</button></div>
+    </div>
+  </section>
+</aside>
+
+<section class="preview" aria-label="معاينة الوثيقة">
+  <div class="pvbar no-print"><span><i data-lucide="eye"></i> معاينة مباشرة <b id="pvName">—</b></span><span>A4 · <span id="pvZoom">100%</span></span></div>
+  <div class="sheet" id="sheet"><div id="printDoc" class="pd"></div></div>
+</section>
+</div>
+
+<footer class="sitefoot sru-tech-bg-dark no-print"><div class="row">
+  <span>مركز العمليات التقنية <b dir="ltr">ITOC</b> — الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي © 2026 · SRU-FRM-SOP-01 · الإصدار <span class="ver tplVer2">v3.1</span></span>
+  <a class="itoc-link" href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center"><img data-logo="itoc" alt="ITOC — IT Operations Center"></a>
+</div></footer>
+
+<!-- Records modal -->
+<div class="modal" id="listModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="box"><h3>سجل الإجراءات المحفوظة <span class="en" style="color:#e6dcf5">SOP Register</span></h3>
+    <div class="body"><input id="listFilter" placeholder="بحث بالرقم أو العنوان..." oninput="renderList()" style="margin-bottom:8px">
+      <div id="listBody">...</div></div></div>
+</div>
+
+<div id="toast"></div>
+
+<script>var DATA = <?!= dataJson ?>;</script>
+<script src="<?= appJsUrl ?>"></script>
+<script>
+if (!window.__APP_LOADED) {
+  var s = document.getElementById('status');
+  if (s && !(window.__pageErrors && window.__pageErrors.length)) s.textContent = 'تعذّر تحميل app.js من GitHub — تحقّق من رفعه إلى المستودع ictsru/SOP';
+}
+</script>
+<!-- Logos last: if the Logos file is damaged, only the logos are affected, never the form -->
+<?!= include('Logos') ?>
+<script>
+(function () {
+  var WEB = { sru: 'https://ictsru.github.io/ITOC/assets/sru-logo.png', ictd: 'https://ictsru.github.io/ITOC/assets/ictd-logo.png', itoc: 'https://ictsru.github.io/ITOC/assets/itoc-logo.png' };
+  if (window.applyLogos) { applyLogos(); if (window.renderPreview) renderPreview(); }
+  else { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { var k = img.getAttribute('data-logo'); img.src = (window.ITOC_LOGOS && ITOC_LOGOS[k]) || WEB[k] || ''; }); }
+  if (!window.ITOC_LOGOS) console.warn('Logos.html missing or incomplete — using ITOC site images');
+})();
+</script>
+</body>
+</html>
