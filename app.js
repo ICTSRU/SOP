@@ -1,4 +1,4 @@
-/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v3.2
+/* SRU SOP Register — page logic (SRU-FRM-SOP-01) · app.js v3.3
    Hosted on GitHub Pages (ictsru/SOP) and loaded by the Apps Script page.
    Contains no data or secrets: every read/save is checked on the server (requireSruUser_). */
 /* Logos: ITOC-site images first; embedded ones (Logos file, loaded at the end) replace them when available */
@@ -9,7 +9,7 @@ window.LOGO_SRC = function (k) { return (window.ITOC_LOGOS && ITOC_LOGOS[k]) || 
 function applyLogos() { [].forEach.call(document.querySelectorAll('img[data-logo]'), function (img) { img.src = LOGO_SRC(img.getAttribute('data-logo')); }); }
 applyLogos();
 /* ================= Configuration ================= */
-const TEMPLATE_VERSION = '3.2';
+const TEMPLATE_VERSION = '3.3';
 const DRAFT_KEY = 'sru_sop_draft_v1';
 
 const TABLES = {
@@ -245,7 +245,7 @@ function printDoc(){
 }
 
 /* ================= New / Example ================= */
-function newSop(force){ if(!adminOnly()) return; if(!force && !confirm('بدء إجراء جديد؟ سيتم مسح النموذج الحالي.')) return; blankSop(); }
+function newSop(force){ if(!force && !confirm('بدء إجراء جديد؟ سيتم مسح النموذج الحالي.')) return; blankSop(); }
 function blankSop(){
   fill({unit_code:'ICTD',status:'مسودة',classification:'داخلي',version:'1.0',department:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',review_cycle:'12',target_unit:'ساعة عمل',priority:'متوسطة',
         signers:[{role:'إعداد',name:'',email:(window.DATA&&DATA.user)||''},{role:'مراجعة',name:'',email:''},{role:'اعتماد',name:'',email:''}],
@@ -914,7 +914,7 @@ $('#tplVer').textContent=TEMPLATE_VERSION;
   document.body.dataset.pane='edit';
   applySignLock(); icons(); renderPreview(); loadRecords(null, DATA && !DATA.error ? {ok:true, items:DATA.items||[]} : null);
   const dl=DATA&&DATA.params&&DATA.params.code; if(dl) loadRecord(dl);
-  else if(DATA&&DATA.params&&DATA.params.fresh && IS_ADMIN) newSop(true);   // v2.7: «＋ إجراء جديد» from the status board
+  else if(DATA&&DATA.params&&DATA.params.fresh) newSop(true);   // v2.7: «＋ إجراء جديد» from the status board
 })();
 
-window.__APP_LOADED = '3.2';
+window.__APP_LOADED = '3.3';

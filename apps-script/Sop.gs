@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- *  SRU SOP Register — SOP logic (SRU-FRM-SOP-01) · v3.2
+ *  SRU SOP Register — SOP logic (SRU-FRM-SOP-01) · v3.3
  *  Runs inside the SRU Secure Access Kit (Code.gs = access + log).
  *  E-signatures live in Sign.gs (ported from the ICTD Policy Platform v3.3).
  *  Every function the page calls (api*) starts with requireSruUser_().

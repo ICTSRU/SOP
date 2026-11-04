@@ -1,5 +1,9 @@
 # CHANGELOG — SRU SOP Template (SRU-FRM-SOP-01)
 
+## 3.3 — 2026-11-04
+### Changed
+- **Regular users can add a new SOP again**: «جديد» in the form and «＋ إجراء جديد» on the status board (and `?new=1`) are available to everyone. «تحميل المثال», «JSON» and «استيراد» stay admin-only.
+
 ## 3.2 — 2026-11-03
 ### Changed
 - The status line under the header («مسودة محفوظة محليًا · المعاينة محدّثة») is removed; save results appear as notifications.

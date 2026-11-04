@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- *  SRU SOP Register — E-signatures · v3.2
+ *  SRU SOP Register — E-signatures · v3.3
  *  Ported from the ICTD Policy Platform v3.3 (same mechanism), with its OWN register:
  *  sheets Signers / SigningLog / Signed in this SOP spreadsheet, its own Drive folders
  *  and its own secret pepper. Nothing is shared with the policy or MoU platforms.

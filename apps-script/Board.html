@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="version" content="3.2">
-<title>لوحة حالة الإجراءات التشغيلية | SRU SOP Register v3.2</title>
+<meta name="version" content="3.3">
+<title>لوحة حالة الإجراءات التشغيلية | SRU SOP Register v3.3</title>
 <script src="config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* SRU SOP Register — Status Board (SRU-FRM-SOP-01) · v3.2 */
+/* SRU SOP Register — Status Board (SRU-FRM-SOP-01) · v3.3 */
 :root{--purple:#501e8c;--purple-dark:#3a1464;--purple-light:#f0ebf8;--blue:#0a6eaa;--bg:#f7f5fb;--border:rgba(80,30,140,.14);--ink:#241436;--muted:#6b5a80;--radius:8px}
 *{box-sizing:border-box}
 body{margin:0;font-family:'Cairo',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7;min-height:100vh;display:flex;flex-direction:column}
@@ -135,7 +135,7 @@ table.dash{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
 </main>
 
 <footer class="sitefoot tech dark"><div class="r">
-  <span>مركز العمليات التقنية <b dir="ltr">ITOC</b> — الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي © 2026 · SRU-FRM-SOP-01 · الإصدار <span class="ver">v3.2</span></span>
+  <span>مركز العمليات التقنية <b dir="ltr">ITOC</b> — الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي © 2026 · SRU-FRM-SOP-01 · الإصدار <span class="ver">v3.3</span></span>
   <a href="https://ictsru.github.io/ITOC/" target="_blank" rel="noopener" title="ITOC — IT Operations Center"><img data-logo="itoc" alt="ITOC — IT Operations Center"></a>
 </div></footer>
 <div class="toast" id="toast" role="status"></div>
@@ -160,7 +160,6 @@ function go(qs){ return (BOOT.baseUrl||'')+(qs?'?'+qs:''); }
   const svg="<svg xmlns='"+['http:','','www.w3.org','2000','svg'].join('/')+"' width='520' height='200' viewBox='0 0 520 200'><g stroke='#8fd3ff' stroke-opacity='.35' stroke-width='1' fill='none'><path d='M20 40L110 90L200 30L300 110L390 60L500 130'/><path d='M110 90L150 170L260 150L300 110'/><path d='M390 60L430 160L500 130'/><path d='M200 30L260 150'/><path d='M20 40L60 150L150 170'/></g><g fill='#fff' fill-opacity='.75'><circle cx='20' cy='40' r='2.4'/><circle cx='110' cy='90' r='2.8'/><circle cx='200' cy='30' r='2.2'/><circle cx='300' cy='110' r='3'/><circle cx='390' cy='60' r='2.4'/><circle cx='500' cy='130' r='2.6'/><circle cx='150' cy='170' r='2.2'/><circle cx='260' cy='150' r='2.6'/><circle cx='430' cy='160' r='2.2'/><circle cx='60' cy='150' r='2'/></g></svg>";
   document.documentElement.style.setProperty('--net','url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
 })();
-if(!BOOT.admin){ const n=document.querySelector('a[data-go=new]'); if(n) n.remove(); }
 document.querySelectorAll('a[data-go]').forEach(a=>{ a.href=go(a.dataset.go==='new'?'new=1':''); a.target='_top'; });
 
 /* ---------- derived state ---------- */
@@ -263,7 +262,7 @@ function exportCsv(){
 document.querySelectorAll('.kpi').forEach(b=>b.addEventListener('click',()=>{ KF=(KF===b.dataset.k&&KF!=='all')?'all':b.dataset.k; kpis(); render(); }));
 ['#q','#fDept','#fStatus','#fSign','#fSort'].forEach(s=>$(s).addEventListener(s==='#q'?'input':'change',render));
 window.SW_CONF='سيتم تسجيل الخروج من حسابات Google في هذا المتصفح، ثم تختار الحساب الجامعي المطلوب وتعود إلى المنصة. متابعة؟';
-/* v3.2 account chip + «تبديل الحساب» (links come from the server in BOOT) */
+/* v3.3 account chip + «تبديل الحساب» (links come from the server in BOOT) */
 (function(){
   const B=window.BOOT||{}, host=document.getElementById('acct'); if(!host||!B.user) return;
   const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

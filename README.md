@@ -1,6 +1,6 @@
 # SRU SOP Register — نموذج إجراء تشغيلي قياسي
 
-**Form code:** SRU-FRM-SOP-01 · **Version:** 3.2 · **Owner:** ICTD — ITOC (IT Operations Center)
+**Form code:** SRU-FRM-SOP-01 · **Version:** 3.3 · **Owner:** ICTD — ITOC (IT Operations Center)
 **Built on:** SRU Secure Access Kit v1.4 · **E-signatures:** ported from the ICTD Policy Platform v3.3
 
 The SOP form runs **inside Google Apps Script**. Only Sulaiman Al Rajhi University accounts (@sr.edu.sa) on the access list can open it, read, save or sign SOPs. Every sign-in and every signing action is logged.
@@ -64,7 +64,8 @@ A push that changes `apps-script/**` runs **Actions ▸ Deploy Apps Script**: it
 
 | Feature | admin (`AllowedUsers` role `admin` or `OWNER_EMAILS`) | Regular user |
 |---|---|---|
-| «جديد» · «تحميل المثال» · «JSON» · «استيراد» · board «＋ إجراء جديد» | ✓ | Hidden (not in the page; the functions refuse if called) |
+| «جديد» · board «＋ إجراء جديد» (v3.3) | ✓ | ✓ |
+| «تحميل المثال» · «JSON» · «استيراد» | ✓ | Hidden (not in the page; the functions refuse if called) |
 | Signature display mode (platform-wide) | Chooses it | Sees it as text |
 | All registered signatures; register one for someone else | ✓ | Own signatures only |
 

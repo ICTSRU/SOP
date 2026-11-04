@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>التحقق من إجراء موقّع | SRU SOP Register v3.2</title>
+<title>التحقق من إجراء موقّع | SRU SOP Register v3.3</title>
 <script src="config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -180,7 +180,7 @@ document.querySelectorAll('a[data-page]').forEach(a=>{ a.href=pageUrl(a.dataset.
 if(GAS){ const v=(BOOT.params||{}).verify; if(v){ $('#code').value=v; byCode(v); } }
 
 window.SW_CONF='سيتم تسجيل الخروج من حسابات Google في هذا المتصفح، ثم تختار الحساب الجامعي المطلوب وتعود إلى المنصة. متابعة؟';
-/* v3.2 account chip + «تبديل الحساب» (links come from the server in BOOT) */
+/* v3.3 account chip + «تبديل الحساب» (links come from the server in BOOT) */
 (function(){
   const B=window.BOOT||{}, host=document.getElementById('acct'); if(!host||!B.user) return;
   const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -197,10 +197,10 @@ window.addEventListener('load',()=>{
   h.innerHTML='<img src="'+(L.sru||'')+'" alt="جامعة سليمان الراجحي"><img src="'+(L.ictd||'')+'" alt="الإدارة التنفيذية للاتصالات وتقنية المعلومات">';
   document.body.insertBefore(h,document.body.firstChild);
   const f=document.createElement('footer'); f.className='sitefoot';
-  f.innerHTML='<span><b>التحقق من إجراء موقّع · SOP Verification</b> — الإصدار <b>v3.2</b><br>الإدارة التنفيذية للاتصالات وتقنية المعلومات · جامعة سليمان الراجحي © '+new Date().getFullYear()+'</span><img src="'+(L.itoc||'')+'" alt="ITOC">';
+  f.innerHTML='<span><b>التحقق من إجراء موقّع · SOP Verification</b> — الإصدار <b>v3.3</b><br>الإدارة التنفيذية للاتصالات وتقنية المعلومات · جامعة سليمان الراجحي © '+new Date().getFullYear()+'</span><img src="'+(L.itoc||'')+'" alt="ITOC">';
   document.body.appendChild(f);
 });
 </script>
-<script src="https://ictsru.github.io/ITOC/brand/sru-brand.js" data-form-title="التحقق من إجراء موقّع · SOP Verification" data-form-version="v3.2" defer></script>
+<script src="https://ictsru.github.io/ITOC/brand/sru-brand.js" data-form-title="التحقق من إجراء موقّع · SOP Verification" data-form-version="v3.3" defer></script>
 </body>
 </html>
